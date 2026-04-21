@@ -6,13 +6,13 @@ import prisma from "@/lib/prisma";
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return { error: NextResponse.json({ error: "Connexion requise" }, { status: 401 }) };
   }
 
   const isAdmin = Boolean((session.user as { is_admin?: boolean }).is_admin);
 
   if (!isAdmin) {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+    return { error: NextResponse.json({ error: "Accès refusé" }, { status: 403 }) };
   }
 
   return { session };
@@ -33,7 +33,7 @@ export async function PATCH(
     const { is_admin } = body as { is_admin?: unknown };
 
     if (typeof is_admin !== "boolean") {
-      return NextResponse.json({ error: "is_admin must be a boolean" }, { status: 400 });
+      return NextResponse.json({ error: "is_admin doit être un booléen" }, { status: 400 });
     }
 
     const updated = await prisma.user.update({
@@ -49,6 +49,6 @@ export async function PATCH(
     return NextResponse.json({ user: updated });
   } catch (error) {
     console.error("Failed to update admin flag:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

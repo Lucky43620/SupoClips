@@ -39,7 +39,7 @@ describe("/api/tasks/create", () => {
     );
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: "Unauthorized" });
+    await expect(response.json()).resolves.toEqual({ error: "Connexion requise" });
   });
 
   it("proxies task creation to the backend", async () => {

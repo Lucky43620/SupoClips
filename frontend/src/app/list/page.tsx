@@ -63,7 +63,7 @@ async function fetchTasksList() {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch tasks: ${response.status}`);
+    throw new Error(`Impossible de récupérer les tâches : ${response.status}`);
   }
 
   const data = await response.json();
@@ -80,31 +80,31 @@ const STATUS_CONFIG: Record<
   { label: string; dotClass: string; bgClass: string; textClass: string }
 > = {
   completed: {
-    label: "Completed",
+    label: "Terminé",
     dotClass: "bg-emerald-500",
     bgClass: "bg-emerald-50 border-emerald-200/60",
     textClass: "text-emerald-800",
   },
   processing: {
-    label: "Processing",
+    label: "Traitement",
     dotClass: "bg-blue-500 animate-pulse",
     bgClass: "bg-blue-50 border-blue-200/60",
     textClass: "text-blue-800",
   },
   queued: {
-    label: "Queued",
+    label: "En file",
     dotClass: "bg-amber-500",
     bgClass: "bg-amber-50 border-amber-200/60",
     textClass: "text-amber-800",
   },
   error: {
-    label: "Error",
+    label: "Erreur",
     dotClass: "bg-red-500",
     bgClass: "bg-red-50 border-red-200/60",
     textClass: "text-red-800",
   },
   cancelled: {
-    label: "Cancelled",
+    label: "Annulé",
     dotClass: "bg-stone-400",
     bgClass: "bg-stone-100 border-stone-200/60",
     textClass: "text-stone-600",
@@ -143,7 +143,7 @@ export default function ListPage() {
         );
       } catch (err) {
         console.error("Error fetching tasks:", err);
-        setError(err instanceof Error ? err.message : "Failed to load tasks");
+        setError(err instanceof Error ? err.message : "Impossible de charger les tâches");
       } finally {
         setIsLoading(false);
       }
@@ -176,7 +176,7 @@ export default function ListPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat("fr-FR", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -266,7 +266,7 @@ export default function ListPage() {
         message:
           refreshError instanceof Error
             ? refreshError.message
-            : "The batch action finished, but the list could not be refreshed.",
+            : "L'action groupée est terminée, mais la liste n'a pas pu être actualisée.",
       });
     } finally {
       setActiveBatchAction(null);
@@ -283,10 +283,10 @@ export default function ListPage() {
       targetTaskIds,
       (taskId) => fetch(`/api/tasks/${taskId}/cancel`, { method: "POST" }),
       {
-        empty: "No active generations in selection to cancel.",
-        fallback: "Failed to cancel generation",
-        success: (count) => `${count} generation${count === 1 ? "" : "s"} cancelled.`,
-        partial: (s, f, err) => `${s} cancelled, ${f} failed. ${err}`,
+        empty: "Aucune génération active dans la sélection à annuler.",
+        fallback: "Impossible d'annuler la génération",
+        success: (count) => `${count} génération${count === 1 ? "" : "s"} annulée${count === 1 ? "" : "s"}.`,
+        partial: (s, f, err) => `${s} annulée${s === 1 ? "" : "s"}, ${f} en échec. ${err}`,
       },
     );
   };
@@ -301,10 +301,10 @@ export default function ListPage() {
       targetTaskIds,
       (taskId) => fetch(`/api/tasks/${taskId}/resume`, { method: "POST" }),
       {
-        empty: "No failed or cancelled generations in selection to resume.",
-        fallback: "Failed to resume generation",
-        success: (count) => `${count} generation${count === 1 ? "" : "s"} resumed.`,
-        partial: (s, f, err) => `${s} resumed, ${f} failed. ${err}`,
+        empty: "Aucune génération échouée ou annulée dans la sélection à reprendre.",
+        fallback: "Impossible de reprendre la génération",
+        success: (count) => `${count} génération${count === 1 ? "" : "s"} relancée${count === 1 ? "" : "s"}.`,
+        partial: (s, f, err) => `${s} relancée${s === 1 ? "" : "s"}, ${f} en échec. ${err}`,
       },
     );
   };
@@ -317,10 +317,10 @@ export default function ListPage() {
       targetTaskIds,
       (taskId) => fetch(`/api/tasks/${taskId}`, { method: "DELETE" }),
       {
-        empty: "Select at least one generation to delete.",
-        fallback: "Failed to delete generation",
-        success: (count) => `${count} generation${count === 1 ? "" : "s"} deleted.`,
-        partial: (s, f, err) => `${s} deleted, ${f} failed. ${err}`,
+        empty: "Sélectionnez au moins une génération à supprimer.",
+        fallback: "Impossible de supprimer la génération",
+        success: (count) => `${count} génération${count === 1 ? "" : "s"} supprimée${count === 1 ? "" : "s"}.`,
+        partial: (s, f, err) => `${s} supprimée${s === 1 ? "" : "s"}, ${f} en échec. ${err}`,
       },
     );
 
@@ -345,12 +345,12 @@ export default function ListPage() {
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-4 py-24 text-center">
-          <h1 className="text-3xl font-bold text-black mb-4">Sign In Required</h1>
+          <h1 className="text-3xl font-bold text-black mb-4">Connexion requise</h1>
           <p className="text-gray-600 mb-8">
-            You need to be signed in to view your generations.
+            Vous devez être connecté pour voir vos générations.
           </p>
           <Link href="/sign-in">
-            <Button size="lg">Sign In</Button>
+            <Button size="lg">Se connecter</Button>
           </Link>
         </div>
       </div>
@@ -393,7 +393,7 @@ export default function ListPage() {
             <Link href="/">
               <Button variant="ghost" size="sm" className="text-stone-500 hover:text-stone-900">
                 <ArrowLeft className="w-4 h-4" />
-                Back
+                Retour
               </Button>
             </Link>
           </div>
@@ -401,10 +401,10 @@ export default function ListPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="font-[var(--font-syne)] text-2xl font-bold tracking-tight text-stone-950">
-                Generations
+                Générations
               </h1>
               <p className="mt-1 text-sm text-stone-500">
-                {tasks.length} total &middot; manage and review your clips
+                {tasks.length} au total &middot; gérez et vérifiez vos clips
               </p>
             </div>
 
@@ -413,19 +413,19 @@ export default function ListPage() {
                 {completedCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 text-xs font-medium text-emerald-800">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    {completedCount} done
+                    {completedCount} terminée{completedCount === 1 ? "" : "s"}
                   </span>
                 )}
                 {activeCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200/60 px-2.5 py-1 text-xs font-medium text-blue-800">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    {activeCount} active
+                    {activeCount} active{activeCount === 1 ? "" : "s"}
                   </span>
                 )}
                 {attentionCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200/60 px-2.5 py-1 text-xs font-medium text-red-700">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                    {attentionCount} need attention
+                    {attentionCount} à vérifier
                   </span>
                 )}
               </div>
@@ -484,12 +484,12 @@ export default function ListPage() {
               <div className="w-16 h-16 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <PlayCircle className="w-8 h-8 text-stone-400" />
               </div>
-              <h2 className="text-xl font-semibold text-stone-950 mb-2">No generations yet</h2>
+              <h2 className="text-xl font-semibold text-stone-950 mb-2">Aucune génération pour le moment</h2>
               <p className="text-stone-500 mb-6 text-sm">
-                Start by processing your first video to create clips.
+                Commencez par traiter votre première vidéo pour créer des clips.
               </p>
               <Link href="/">
-                <Button>Create New Generation</Button>
+                <Button>Créer une génération</Button>
               </Link>
             </CardContent>
           </Card>
@@ -501,11 +501,11 @@ export default function ListPage() {
                 checked={allVisibleSelected ? true : someSelected ? "indeterminate" : false}
                 onCheckedChange={handleToggleAllVisible}
                 disabled={activeBatchAction !== null}
-                aria-label="Select all generations"
+                aria-label="Sélectionner toutes les générations"
                 className="data-[state=indeterminate]:bg-stone-400 data-[state=indeterminate]:border-stone-400"
               />
               <span className="text-xs font-medium uppercase tracking-widest text-stone-400">
-                {selectedCount > 0 ? `${selectedCount} of ${tasks.length} selected` : "Select"}
+                {selectedCount > 0 ? `${selectedCount} sur ${tasks.length} sélectionnée${selectedCount === 1 ? "" : "s"}` : "Sélectionner"}
               </span>
             </div>
 
@@ -540,8 +540,8 @@ export default function ListPage() {
                         disabled={activeBatchAction !== null}
                         aria-label={
                           isSelected
-                            ? `Deselect ${task.source_title}`
-                            : `Select ${task.source_title}`
+                            ? `Désélectionner ${task.source_title}`
+                            : `Sélectionner ${task.source_title}`
                         }
                       />
                     </div>
@@ -598,13 +598,13 @@ export default function ListPage() {
                 checked={allVisibleSelected ? true : someSelected ? "indeterminate" : false}
                 onCheckedChange={handleToggleAllVisible}
                 disabled={activeBatchAction !== null}
-                aria-label="Select all"
+                aria-label="Tout sélectionner"
                 className="border-stone-600 data-[state=checked]:bg-white data-[state=checked]:text-stone-950 data-[state=checked]:border-white data-[state=indeterminate]:bg-stone-500 data-[state=indeterminate]:border-stone-500"
               />
               <span className="text-sm font-medium text-white tabular-nums">
                 {selectedCount}
                 <span className="text-stone-400 ml-0.5">
-                  {" "}selected
+                  {" "}sélectionnée{selectedCount === 1 ? "" : "s"}
                 </span>
               </span>
             </div>
@@ -627,14 +627,14 @@ export default function ListPage() {
                     ) : (
                       <PauseCircle className="w-4 h-4" />
                     )}
-                    <span className="hidden sm:inline">Cancel</span>
+                    <span className="hidden sm:inline">Annuler</span>
                     {cancelableCount > 0 && (
                       <span className="text-xs text-stone-500">{cancelableCount}</span>
                     )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8}>
-                  Cancel {cancelableCount} active generation{cancelableCount === 1 ? "" : "s"}
+                  Annuler {cancelableCount} génération{cancelableCount === 1 ? "" : "s"} active{cancelableCount === 1 ? "" : "s"}
                 </TooltipContent>
               </Tooltip>
 
@@ -652,14 +652,14 @@ export default function ListPage() {
                     ) : (
                       <RotateCcw className="w-4 h-4" />
                     )}
-                    <span className="hidden sm:inline">Resume</span>
+                    <span className="hidden sm:inline">Reprendre</span>
                     {resumableCount > 0 && (
                       <span className="text-xs text-stone-500">{resumableCount}</span>
                     )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8}>
-                  Resume {resumableCount} failed/cancelled generation{resumableCount === 1 ? "" : "s"}
+                  Reprendre {resumableCount} génération{resumableCount === 1 ? "" : "s"} échouée{resumableCount === 1 ? "" : "s"} ou annulée{resumableCount === 1 ? "" : "s"}
                 </TooltipContent>
               </Tooltip>
 
@@ -679,11 +679,11 @@ export default function ListPage() {
                     ) : (
                       <Trash2 className="w-4 h-4" />
                     )}
-                    <span className="hidden sm:inline">Delete</span>
+                    <span className="hidden sm:inline">Supprimer</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8}>
-                  Delete {selectedCount} generation{selectedCount === 1 ? "" : "s"}
+                  Supprimer {selectedCount} génération{selectedCount === 1 ? "" : "s"}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -702,13 +702,13 @@ export default function ListPage() {
                   }}
                   disabled={activeBatchAction !== null}
                   className="text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl"
-                  aria-label="Clear selection"
+                  aria-label="Vider la sélection"
                 >
                   <X className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={8}>
-                Clear selection
+                Vider la sélection
               </TooltipContent>
             </Tooltip>
           </div>
@@ -719,14 +719,14 @@ export default function ListPage() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedCount} generation{selectedCount === 1 ? "" : "s"}?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer {selectedCount} génération{selectedCount === 1 ? "" : "s"} ?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove {selectedCount === 1 ? "this generation" : "these generations"} and all
-              associated clips. This cannot be undone.
+              Cela supprimera définitivement {selectedCount === 1 ? "cette génération" : "ces générations"} et tous
+              les clips associés. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={activeBatchAction === "delete"}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={activeBatchAction === "delete"}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => void handleDeleteSelected()}
               disabled={activeBatchAction === "delete" || selectedCount === 0}
@@ -735,10 +735,10 @@ export default function ListPage() {
               {activeBatchAction === "delete" ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Deleting...
+                  Suppression...
                 </>
               ) : (
-                "Delete"
+                "Supprimer"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

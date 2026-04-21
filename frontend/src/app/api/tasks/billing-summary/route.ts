@@ -7,7 +7,7 @@ import { buildBackendAuthHeaders } from "@/lib/backend-auth";
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise" }, { status: 401 });
   }
 
   const apiUrl =

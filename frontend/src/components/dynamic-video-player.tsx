@@ -33,10 +33,10 @@ const DynamicVideoPlayer: React.FC<DynamicVideoPlayerProps> = ({
         poster={poster}
         className="absolute inset-0 w-full h-full object-contain"
         tabIndex={0}
-        aria-label="Video player"
+        aria-label="Lecteur vidéo"
       >
         <source src={src} type="video/mp4" />
-        Your browser does not support the video tag.
+        Votre navigateur ne prend pas en charge la balise vidéo.
       </video>
     </div>
   );

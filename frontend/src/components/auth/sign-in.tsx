@@ -8,6 +8,11 @@ import { Input } from "../ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { useRouter } from "next/navigation";
 
+const authErrorMessages: Record<string, string> = {
+  "Invalid credentials": "Identifiants invalides",
+  "User not found": "Utilisateur introuvable",
+};
+
 export function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +31,7 @@ export function SignIn() {
     });
 
     if (response.error) {
-      setMessage(response.error.message || "Failed to sign in");
+      setMessage(authErrorMessages[response.error.message || ""] || "Impossible de se connecter");
       setLoading(false);
       return;
     }
@@ -34,7 +39,7 @@ export function SignIn() {
     track("signin_completed", {
       auth_method: "email",
     });
-    setMessage("Signed in successfully!");
+    setMessage("Connexion réussie !");
     setLoading(false);
 
     // Redirect after successful sign in
@@ -47,8 +52,8 @@ export function SignIn() {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>Sign in to your account</CardDescription>
+        <CardTitle>Connexion</CardTitle>
+        <CardDescription>Connectez-vous à votre compte</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -62,18 +67,18 @@ export function SignIn() {
           />
           <Input
             type="password"
-            placeholder="Password"
+            placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
           />
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
+            {loading ? "Connexion..." : "Se connecter"}
           </Button>
         </form>
         {message && (
-          <p className={`mt-4 text-sm ${message.includes("successfully") ? "text-green-600" : "text-red-600"}`}>
+          <p className={`mt-4 text-sm ${message.includes("réussie") ? "text-green-600" : "text-red-600"}`}>
             {message}
           </p>
         )}

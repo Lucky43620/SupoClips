@@ -32,10 +32,10 @@ describe("SignIn", () => {
     render(<SignIn />);
 
     await user.type(screen.getByPlaceholderText("Email"), "user@example.com");
-    await user.type(screen.getByPlaceholderText("Password"), "Password123!");
-    await user.click(screen.getByRole("button", { name: "Sign In" }));
+    await user.type(screen.getByPlaceholderText("Mot de passe"), "Password123!");
+    await user.click(screen.getByRole("button", { name: "Se connecter" }));
 
-    expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();
+    expect(await screen.findByText("Identifiants invalides")).toBeInTheDocument();
   });
 
   it("shows a success state after a successful sign in", async () => {
@@ -45,9 +45,9 @@ describe("SignIn", () => {
     render(<SignIn />);
 
     await user.type(screen.getByPlaceholderText("Email"), "user@example.com");
-    await user.type(screen.getByPlaceholderText("Password"), "Password123!");
-    await user.click(screen.getByRole("button", { name: "Sign In" }));
+    await user.type(screen.getByPlaceholderText("Mot de passe"), "Password123!");
+    await user.click(screen.getByRole("button", { name: "Se connecter" }));
 
-    expect(await screen.findByText("Signed in successfully!")).toBeInTheDocument();
+    expect(await screen.findByText("Connexion réussie !")).toBeInTheDocument();
   });
 });

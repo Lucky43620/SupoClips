@@ -40,21 +40,21 @@ const isDataFastEnabled = Boolean(dataFastWebsiteId && dataFastDomain);
 
 export const metadata: Metadata = {
   title: "SupoClip",
-  description: "Turn long videos into viral-ready shorts.",
+  description: "Transformez vos longues vidéos en shorts prêts à publier.",
   metadataBase: getMetadataBase(),
   icons: {
     icon: "/icon.png",
   },
   openGraph: {
     title: "SupoClip",
-    description: "Turn long videos into viral-ready shorts.",
+    description: "Transformez vos longues vidéos en shorts prêts à publier.",
     siteName: "SupoClip",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "SupoClip",
-    description: "Turn long videos into viral-ready shorts.",
+    description: "Transformez vos longues vidéos en shorts prêts à publier.",
   },
 };
 
@@ -64,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         {isDataFastEnabled ? (
           <>

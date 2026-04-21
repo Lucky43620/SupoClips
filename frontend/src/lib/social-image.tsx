@@ -187,7 +187,7 @@ export async function createSocialImageResponse() {
               lineHeight: 1,
             }}
           >
-            Turn long videos into viral-ready shorts
+            Transformez vos longues vidéos en shorts prêts à publier
           </div>
 
           <div
@@ -197,7 +197,7 @@ export async function createSocialImageResponse() {
               marginTop: 8,
             }}
           >
-            {["AI-Powered", "Auto Subtitles", "9:16 Vertical", "Open Source"].map(
+            {["Propulsé par IA", "Sous-titres auto", "Vertical 9:16", "Open source"].map(
               (label) => (
                 <div
                   key={label}

@@ -135,7 +135,7 @@ export default function Home() {
         cache: "no-store",
       });
       if (!response.ok) {
-        throw new Error(`Failed to load fonts (${response.status})`);
+        throw new Error(`Impossible de charger les polices (${response.status})`);
       }
 
       const data = await response.json();
@@ -166,7 +166,7 @@ export default function Home() {
       document.head.appendChild(styleElement);
     } catch (error) {
       console.error("Failed to load fonts:", error);
-      setFontLoadError("Could not load fonts right now.");
+      setFontLoadError("Impossible de charger les polices pour le moment.");
     }
   }, []);
 
@@ -312,7 +312,7 @@ export default function Home() {
 
     const isSupported = file.name.toLowerCase().endsWith(".ttf") || file.name.toLowerCase().endsWith(".otf");
     if (!isSupported) {
-      setError("Only .ttf and .otf files are supported for custom fonts.");
+      setError("Seuls les fichiers .ttf et .otf sont pris en charge pour les polices personnalisées.");
       return;
     }
 
@@ -328,7 +328,7 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const parsed = await parseApiError(response, "Failed to upload font");
+        const parsed = await parseApiError(response, "Impossible d'importer la police");
         setError(formatSupportMessage(parsed));
         return;
       }
@@ -340,7 +340,7 @@ export default function Home() {
       await refreshFonts();
     } catch (uploadError) {
       console.error("Failed to upload font:", uploadError);
-      setError("Failed to upload font. Please try again.");
+      setError("Impossible d'importer la police. Veuillez réessayer.");
     } finally {
       setIsUploadingFont(false);
     }
@@ -388,7 +388,7 @@ export default function Home() {
     if (sourceType === "youtube" && !url.trim()) return;
     if (!session?.user?.id) return;
     if (billingSummary?.monetization_enabled && !billingSummary.can_create_task) {
-      setError(billingSummary.reason || "Active subscription required to continue processing.");
+      setError(billingSummary.reason || "Un abonnement actif est requis pour continuer.");
       return;
     }
 
@@ -408,7 +408,7 @@ export default function Home() {
 
       // If uploading file, upload it first
       if (sourceType === "upload" && fileRef.current) {
-        setStatusMessage("Uploading video file...");
+        setStatusMessage("Import du fichier vidéo...");
         setProgress(5);
 
         const formData = new FormData();
@@ -477,7 +477,7 @@ export default function Home() {
 
     } catch (error) {
       console.error('Error processing video:', error);
-      setError(error instanceof Error ? error.message : 'Failed to process video. Please try again.');
+      setError(error instanceof Error ? error.message : 'Impossible de traiter la vidéo. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
       setProgress(0);
@@ -536,7 +536,7 @@ export default function Home() {
                         : "bg-stone-100 text-stone-600 border border-stone-200"
                     }`}
                   >
-                    {billingSummary.plan === "pro" ? "Pro" : "Free"}
+                    {billingSummary.plan === "pro" ? "Pro" : "Gratuit"}
                   </Badge>
                   <div className="flex items-center gap-1.5">
                     <div className="w-16 h-1.5 bg-stone-200 rounded-full overflow-hidden">
@@ -564,7 +564,7 @@ export default function Home() {
               )}
               <Link href="/list">
                 <Button variant="outline" size="sm">
-                  All Generations
+                  Toutes les générations
                 </Button>
               </Link>
               {isAdmin && (
@@ -575,7 +575,7 @@ export default function Home() {
                 </Link>
               )}
               <Button variant="outline" size="sm" onClick={handleSignOut}>
-                Sign Out
+                Se déconnecter
               </Button>
               <Link href="/settings" className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors cursor-pointer">
                 <Avatar className="w-8 h-8">
@@ -601,7 +601,7 @@ export default function Home() {
                       : "bg-stone-100 text-stone-600 border border-stone-200"
                   }`}
                 >
-                  {billingSummary.plan === "pro" ? "Pro" : "Free"}
+                    {billingSummary.plan === "pro" ? "Pro" : "Gratuit"}
                 </Badge>
               )}
               <Button
@@ -609,7 +609,7 @@ export default function Home() {
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2"
-                aria-label="Toggle menu"
+                aria-label="Ouvrir ou fermer le menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
@@ -674,7 +674,7 @@ export default function Home() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors"
               >
                 <List className="w-4 h-4 text-stone-400" />
-                All Generations
+                Toutes les générations
               </Link>
               {isAdmin && (
                 <Link
@@ -692,7 +692,7 @@ export default function Home() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors"
               >
                 <Settings className="w-4 h-4 text-stone-400" />
-                Settings
+                Réglages
               </Link>
 
               <Separator />
@@ -705,7 +705,7 @@ export default function Home() {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
               >
                 <LogOut className="w-4 h-4" />
-                Sign Out
+                Se déconnecter
               </button>
             </div>
           </div>
@@ -731,7 +731,7 @@ export default function Home() {
                     <span>&middot;</span>
                     <span>{new Date(latestTask.created_at).toLocaleDateString()}</span>
                     <span>&middot;</span>
-                    <span>{latestTask.clips_count} {latestTask.clips_count === 1 ? "clip" : "clips"}</span>
+                    <span>{latestTask.clips_count} clip{latestTask.clips_count === 1 ? "" : "s"}</span>
                   </div>
                 </div>
               </div>
@@ -739,12 +739,12 @@ export default function Home() {
                 {latestTask.status === "completed" ? (
                   <Badge className="bg-green-100 text-green-800 text-xs">
                     <CheckCircle className="w-3 h-3 mr-1" />
-                    Completed
+                    Terminé
                   </Badge>
                 ) : latestTask.status === "processing" ? (
                   <Badge className="bg-blue-100 text-blue-800 text-xs">
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    Processing
+                    Traitement
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="text-xs">{latestTask.status}</Badge>
@@ -773,10 +773,10 @@ export default function Home() {
           <div className="flex-1 min-w-0">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-stone-900 mb-2">
-                Create New Clip
+                Créer un nouveau clip
               </h2>
               <p className="text-stone-500">
-                Paste a YouTube link or upload a video — AI handles the rest.
+                Collez un lien YouTube ou importez une vidéo : l'IA s'occupe du reste.
               </p>
             </div>
 
@@ -800,7 +800,7 @@ export default function Home() {
                     }`}
                   >
                     <Youtube className="w-4 h-4" />
-                    YouTube URL
+                    URL YouTube
                   </button>
                   <button
                     type="button"
@@ -813,7 +813,7 @@ export default function Home() {
                     }`}
                   >
                     <Upload className="w-4 h-4" />
-                    Upload Video
+                    Importer une vidéo
                   </button>
                 </div>
 
@@ -850,8 +850,8 @@ export default function Home() {
                       <p className="text-sm font-medium text-stone-900">{fileName}</p>
                     ) : (
                       <>
-                        <p className="text-sm font-medium text-stone-700">Drop a video file here or click to browse</p>
-                        <p className="text-xs text-stone-400 mt-1">MP4, MOV, AVI up to 500MB</p>
+                        <p className="text-sm font-medium text-stone-700">Déposez une vidéo ici ou cliquez pour parcourir</p>
+                        <p className="text-xs text-stone-400 mt-1">MP4, MOV, AVI jusqu'à 500 Mo</p>
                       </>
                     )}
                   </div>
@@ -863,18 +863,18 @@ export default function Home() {
                 <CardContent className="px-4 pt-0 pb-2.5 space-y-2.5">
                   <div className="flex items-center gap-2 text-sm font-medium text-stone-900">
                     <Sparkles className="w-4 h-4" />
-                    Style & Captions
+                    Style et sous-titres
                   </div>
 
                   {/* Caption Template Selector */}
                   <div className="space-y-2">
                     <label className="text-sm text-stone-600">
-                      Caption Style
+                      Style des sous-titres
                     </label>
                     <Select value={captionTemplate} onValueChange={handleTemplateChange} disabled={isLoading}>
                       <SelectTrigger className="w-full h-11">
                         <SelectValue>
-                          {availableTemplates.find(t => t.id === captionTemplate)?.name || "Select style"}
+                          {availableTemplates.find(t => t.id === captionTemplate)?.name || "Choisir un style"}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -886,7 +886,7 @@ export default function Home() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="default">Default</SelectItem>
+                          <SelectItem value="default">Par défaut</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -898,8 +898,8 @@ export default function Home() {
                       <div className="flex items-center gap-3">
                         <Film className="w-4 h-4 text-purple-500" />
                         <div>
-                          <h3 className="text-sm font-medium text-stone-900">AI B-Roll</h3>
-                          <p className="text-xs text-stone-500">Auto-add stock footage from Pexels</p>
+                          <h3 className="text-sm font-medium text-stone-900">B-roll IA</h3>
+                          <p className="text-xs text-stone-500">Ajoute automatiquement des plans Pexels</p>
                         </div>
                       </div>
                       <Switch
@@ -915,8 +915,8 @@ export default function Home() {
                     <div className="flex items-center gap-3">
                       <Monitor className="w-4 h-4 text-blue-500" />
                       <div>
-                        <h3 className="text-sm font-medium text-stone-900">Wide format</h3>
-                        <p className="text-xs text-stone-500">Keep original aspect ratio instead of 9:16 vertical</p>
+                        <h3 className="text-sm font-medium text-stone-900">Format large</h3>
+                        <p className="text-xs text-stone-500">Garde le ratio original au lieu du vertical 9:16</p>
                       </div>
                     </div>
                     <Switch
@@ -931,8 +931,8 @@ export default function Home() {
                     <div className="flex items-center gap-3">
                       <Type className="w-4 h-4 text-emerald-500" />
                       <div>
-                        <h3 className="text-sm font-medium text-stone-900">Add subtitles</h3>
-                        <p className="text-xs text-stone-500">Burn captions onto clips (disable for faster processing)</p>
+                        <h3 className="text-sm font-medium text-stone-900">Ajouter les sous-titres</h3>
+                        <p className="text-xs text-stone-500">Incruste les sous-titres dans les clips (désactivez pour aller plus vite)</p>
                       </div>
                     </div>
                     <Switch
@@ -960,10 +960,10 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-2 text-sm font-medium text-stone-900">
                       <Paintbrush className="w-4 h-4" />
-                      Font Customization
+                      Personnalisation de la police
                     </div>
                     <button type="button" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
-                      {showAdvancedOptions ? "Hide" : "Show"}
+                      {showAdvancedOptions ? "Masquer" : "Afficher"}
                     </button>
                   </div>
 
@@ -973,10 +973,10 @@ export default function Home() {
                       <div className="space-y-2">
                         <label className="text-sm text-stone-600 flex items-center gap-2">
                           <Type className="w-3.5 h-3.5" />
-                          Font Family
+                          Police
                         </label>
                         <div className="flex items-center justify-between gap-3 text-xs text-stone-500">
-                          <span>{availableFonts.length} font{availableFonts.length === 1 ? "" : "s"} available</span>
+                          <span>{availableFonts.length} police{availableFonts.length === 1 ? "" : "s"} disponible{availableFonts.length === 1 ? "" : "s"}</span>
                           <input
                             ref={fontUploadInputRef}
                             type="file"
@@ -991,22 +991,22 @@ export default function Home() {
                             disabled={isLoading || isUploadingFont || !canUploadCustomFonts}
                             onClick={() => fontUploadInputRef.current?.click()}
                           >
-                            {isUploadingFont ? "Uploading..." : "Upload Font"}
+                            {isUploadingFont ? "Import..." : "Importer une police"}
                           </Button>
                         </div>
                         {!canUploadCustomFonts && (
-                          <p className="text-xs text-amber-700">Custom font upload is available on Pro plans.</p>
+                          <p className="text-xs text-amber-700">L'import de polices personnalisées est disponible avec l'offre Pro.</p>
                         )}
                         <Input
                           type="text"
                           value={fontSearch}
                           onChange={(e) => setFontSearch(e.target.value)}
-                          placeholder="Search fonts"
+                          placeholder="Rechercher une police"
                           disabled={isLoading}
                         />
                         <Select value={fontFamily} onValueChange={setFontFamily} disabled={isLoading}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select font" />
+                            <SelectValue placeholder="Choisir une police" />
                           </SelectTrigger>
                           <SelectContent>
                             {filteredFonts.map((font) => (
@@ -1021,7 +1021,7 @@ export default function Home() {
                             )}
                             {availableFonts.length > 0 && filteredFonts.length === 0 && (
                               <SelectItem value="__no_match__" disabled>
-                                No fonts match your search
+                                Aucune police ne correspond à votre recherche
                               </SelectItem>
                             )}
                           </SelectContent>
@@ -1036,7 +1036,7 @@ export default function Home() {
                         {/* Font Size Slider */}
                         <div className="space-y-2">
                           <label className="text-sm text-stone-600">
-                            Size: {fontSize}px
+                            Taille : {fontSize}px
                           </label>
                           <div className="px-1">
                             <Slider
@@ -1059,7 +1059,7 @@ export default function Home() {
                         <div className="space-y-2">
                           <label className="text-sm text-stone-600 flex items-center gap-1.5">
                             <Palette className="w-3.5 h-3.5" />
-                            Color
+                            Couleur
                           </label>
                           <div className="flex items-center gap-2">
                             <input
@@ -1104,7 +1104,7 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-600">Processing</span>
+                      <span className="text-stone-600">Traitement</span>
                       <span className="text-stone-900 font-medium">{progress}%</span>
                     </div>
                     <Progress value={progress} className="h-2" />
@@ -1117,7 +1117,7 @@ export default function Home() {
                         <div className="flex-1">
                           <p className="text-sm font-medium text-stone-900">{statusMessage}</p>
                           {sourceTitle && (
-                            <p className="text-xs text-stone-500 mt-1">Processing: {sourceTitle}</p>
+                            <p className="text-xs text-stone-500 mt-1">Traitement : {sourceTitle}</p>
                           )}
                         </div>
                       </div>
@@ -1129,23 +1129,23 @@ export default function Home() {
                         </div>
                         <div className={`flex items-center gap-2 p-2 rounded-lg ${currentStep === 'download' || currentStep === 'youtube_info' ? 'bg-green-100' : progress > 30 ? 'bg-green-100' : 'bg-stone-100'}`}>
                           <CheckCircle className={`w-3 h-3 ${progress > 30 ? 'text-green-500' : 'text-stone-400'}`} />
-                          <span className={progress > 30 ? 'text-green-700' : 'text-stone-600'}>Download</span>
+                          <span className={progress > 30 ? 'text-green-700' : 'text-stone-600'}>Téléchargement</span>
                         </div>
                         <div className={`flex items-center gap-2 p-2 rounded-lg ${currentStep === 'transcript' ? 'bg-purple-100' : progress > 45 ? 'bg-green-100' : 'bg-stone-100'}`}>
                           <CheckCircle className={`w-3 h-3 ${progress > 45 ? 'text-green-500' : 'text-stone-400'}`} />
-                          <span className={progress > 45 ? 'text-green-700' : 'text-stone-600'}>Transcript</span>
+                          <span className={progress > 45 ? 'text-green-700' : 'text-stone-600'}>Transcription</span>
                         </div>
                         <div className={`flex items-center gap-2 p-2 rounded-lg ${currentStep === 'ai_analysis' ? 'bg-orange-100' : progress > 60 ? 'bg-green-100' : 'bg-stone-100'}`}>
                           <CheckCircle className={`w-3 h-3 ${progress > 60 ? 'text-green-500' : 'text-stone-400'}`} />
-                          <span className={progress > 60 ? 'text-green-700' : 'text-stone-600'}>AI Analysis</span>
+                          <span className={progress > 60 ? 'text-green-700' : 'text-stone-600'}>Analyse IA</span>
                         </div>
                         <div className={`flex items-center gap-2 p-2 rounded-lg ${currentStep === 'clip_generation' ? 'bg-indigo-100' : progress > 75 ? 'bg-green-100' : 'bg-stone-100'}`}>
                           <CheckCircle className={`w-3 h-3 ${progress > 75 ? 'text-green-500' : 'text-stone-400'}`} />
-                          <span className={progress > 75 ? 'text-green-700' : 'text-stone-600'}>Create Clips</span>
+                          <span className={progress > 75 ? 'text-green-700' : 'text-stone-600'}>Création des clips</span>
                         </div>
                         <div className={`flex items-center gap-2 p-2 rounded-lg ${currentStep === 'complete' ? 'bg-green-100' : progress >= 100 ? 'bg-green-100' : 'bg-stone-100'}`}>
                           <CheckCircle className={`w-3 h-3 ${progress >= 100 ? 'text-green-500' : 'text-stone-400'}`} />
-                          <span className={progress >= 100 ? 'text-green-700' : 'text-stone-600'}>Complete</span>
+                          <span className={progress >= 100 ? 'text-green-700' : 'text-stone-600'}>Terminé</span>
                         </div>
                       </div>
                     </div>
@@ -1163,9 +1163,9 @@ export default function Home() {
               )}
 
               <p className="text-xs text-stone-500">
-                Completion emails use your user preference in{" "}
+                Les emails de fin de traitement suivent votre préférence dans{" "}
                 <Link href="/settings" className="font-medium text-stone-700 underline underline-offset-2">
-                  Settings
+                  Réglages
                 </Link>.
               </p>
 
@@ -1179,7 +1179,7 @@ export default function Home() {
                   isLoading
                 }
               >
-                {isLoading ? "Processing..." : "Process Video"}
+                {isLoading ? "Traitement..." : "Traiter la vidéo"}
               </Button>
             </form>
           </div>
@@ -1202,7 +1202,7 @@ export default function Home() {
             <div className="lg:sticky lg:top-8">
               <div className="flex items-center justify-center gap-2 mb-5 text-sm text-stone-400">
                 <Monitor className="w-4 h-4" />
-                <span>Live Preview</span>
+                <span>Aperçu en direct</span>
               </div>
 
               {/* Phone Frame — realistic iPhone style */}
@@ -1259,9 +1259,9 @@ export default function Home() {
 
                     {/* TikTok-style top navigation */}
                     <div className="absolute top-12 left-0 right-0 z-10 flex justify-center items-center gap-5">
-                      <span className="text-white/50 text-xs font-medium">Following</span>
+                      <span className="text-white/50 text-xs font-medium">Abonnements</span>
                       <span className="text-white text-xs font-semibold relative">
-                        For You
+                        Pour vous
                         <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-full" />
                       </span>
                     </div>
@@ -1294,7 +1294,7 @@ export default function Home() {
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white" className="opacity-90">
                           <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                         </svg>
-                        <span className="text-white text-[10px] font-semibold">Share</span>
+                        <span className="text-white text-[10px] font-semibold">Partager</span>
                       </div>
                     </div>
 
@@ -1312,7 +1312,7 @@ export default function Home() {
                           }}
                           className="font-bold"
                         >
-                          Your subtitle will look like this
+                          Vos sous-titres ressembleront à ceci
                         </p>
                       </div>
                     </div>
@@ -1321,13 +1321,13 @@ export default function Home() {
                     <div className="absolute left-3 z-10 max-w-[60%]" style={{ bottom: "110px" }}>
                       <p className="text-white text-xs font-bold mb-1">@creator_name</p>
                       <p className="text-white/80 text-[10px] leading-snug">
-                        Check out this amazing clip generated by AI
+                        Découvrez ce clip généré par IA
                       </p>
                       <div className="flex items-center gap-1.5 mt-2">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="white" className="opacity-70">
                           <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                         </svg>
-                        <span className="text-white/70 text-[9px]">Original Sound - creator_name</span>
+                        <span className="text-white/70 text-[9px]">Son original - creator_name</span>
                       </div>
                     </div>
 
@@ -1338,13 +1338,13 @@ export default function Home() {
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
                           </svg>
-                          <span className="text-white text-[8px]">Home</span>
+                          <span className="text-white text-[8px]">Accueil</span>
                         </div>
                         <div className="flex flex-col items-center gap-0.5">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="white" opacity="0.5">
                             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/>
                           </svg>
-                          <span className="text-white/50 text-[8px]">Discover</span>
+                          <span className="text-white/50 text-[8px]">Découvrir</span>
                         </div>
                         <div className="relative -mt-3">
                           <div className="w-10 h-7 rounded-lg bg-white flex items-center justify-center">
@@ -1355,11 +1355,11 @@ export default function Home() {
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="white" opacity="0.5">
                             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
                           </svg>
-                          <span className="text-white/50 text-[8px]">Inbox</span>
+                          <span className="text-white/50 text-[8px]">Messages</span>
                         </div>
                         <div className="flex flex-col items-center gap-0.5">
                           <div className="w-5 h-5 rounded-full bg-white/30" />
-                          <span className="text-white/50 text-[8px]">Me</span>
+                          <span className="text-white/50 text-[8px]">Moi</span>
                         </div>
                       </div>
                       {/* Home indicator */}
@@ -1371,19 +1371,19 @@ export default function Home() {
                 {/* Caption info below phone */}
                 <div className="mt-6 space-y-3 px-2">
                   <div className="flex items-center justify-between text-xs text-stone-500">
-                    <span>Font</span>
+                    <span>Police</span>
                     <span className="text-stone-700 font-medium">
                       {availableFonts.find(f => f.name === fontFamily)?.display_name || fontFamily}
                     </span>
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between text-xs text-stone-500">
-                    <span>Size</span>
+                    <span>Taille</span>
                     <span className="text-stone-700 font-medium">{fontSize}px</span>
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between text-xs text-stone-500">
-                    <span>Color</span>
+                    <span>Couleur</span>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full border border-stone-300" style={{ backgroundColor: fontColor }} />
                       <span className="text-stone-700 font-medium">{fontColor}</span>
@@ -1391,9 +1391,9 @@ export default function Home() {
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between text-xs text-stone-500">
-                    <span>Template</span>
+                    <span>Modèle</span>
                     <span className="text-stone-700 font-medium">
-                      {availableTemplates.find(t => t.id === captionTemplate)?.name || "Default"}
+                      {availableTemplates.find(t => t.id === captionTemplate)?.name || "Par défaut"}
                     </span>
                   </div>
                 </div>

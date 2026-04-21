@@ -89,7 +89,6 @@ async def process_video_task(
                 progress_callback=update_progress,
                 should_cancel=should_cancel,
                 clip_ready_callback=clip_ready_callback,
-                cleanup_settings=cleanup_settings,
             )
 
             logger.info(f"Task {task_id} completed successfully")

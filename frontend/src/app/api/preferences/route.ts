@@ -9,7 +9,7 @@ export async function GET(_: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Connexion requise" },
         { status: 401 }
       );
     }
@@ -27,7 +27,7 @@ export async function GET(_: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
+        { error: "Utilisateur introuvable" },
         { status: 404 }
       );
     }
@@ -41,7 +41,7 @@ export async function GET(_: NextRequest) {
   } catch (error) {
     console.error("Error fetching preferences:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur interne du serveur" },
       { status: 500 }
     );
   }
@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Connexion requise" },
         { status: 401 }
       );
     }
@@ -65,21 +65,21 @@ export async function PATCH(request: NextRequest) {
     // Validate inputs
     if (fontFamily && typeof fontFamily !== "string") {
       return NextResponse.json(
-        { error: "Invalid fontFamily" },
+        { error: "Police invalide" },
         { status: 400 }
       );
     }
 
     if (fontSize && (typeof fontSize !== "number" || fontSize < 12 || fontSize > 48)) {
       return NextResponse.json(
-        { error: "Invalid fontSize (must be between 12 and 48)" },
+        { error: "Taille de police invalide (entre 12 et 48)" },
         { status: 400 }
       );
     }
 
     if (fontColor && !/^#[0-9A-Fa-f]{6}$/.test(fontColor)) {
       return NextResponse.json(
-        { error: "Invalid fontColor (must be hex format like #FFFFFF)" },
+        { error: "Couleur de police invalide (format hexadécimal, ex. #FFFFFF)" },
         { status: 400 }
       );
     }
@@ -89,7 +89,7 @@ export async function PATCH(request: NextRequest) {
       typeof notifyOnCompletion !== "boolean"
     ) {
       return NextResponse.json(
-        { error: "Invalid notifyOnCompletion" },
+        { error: "Préférence de notification invalide" },
         { status: 400 }
       );
     }
@@ -122,7 +122,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("Error updating preferences:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur interne du serveur" },
       { status: 500 }
     );
   }

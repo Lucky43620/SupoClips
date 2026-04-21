@@ -15,6 +15,25 @@ function statusBadgeClass(status: string) {
   return "bg-gray-100 text-gray-700";
 }
 
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    completed: "Terminé",
+    processing: "Traitement",
+    queued: "En file",
+    pending: "En attente",
+    error: "Erreur",
+    failed: "Échec",
+    cancelled: "Annulé",
+  };
+  return labels[status] || status;
+}
+
+function planLabel(plan: string | null) {
+  if (plan === "pro") return "Pro";
+  if (plan === "free") return "Gratuit";
+  return plan || "Gratuit";
+}
+
 export default async function AdminPage({
   searchParams,
 }: {
@@ -26,9 +45,9 @@ export default async function AdminPage({
     return (
       <main className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="text-2xl font-semibold">Admin</h1>
-        <p className="mt-3 text-sm text-gray-600">You need to sign in to view this page.</p>
+        <p className="mt-3 text-sm text-gray-600">Vous devez vous connecter pour voir cette page.</p>
         <Link href="/sign-in" className="mt-6 inline-block text-sm font-medium text-black underline">
-          Go to sign in
+          Aller à la connexion
         </Link>
       </main>
     );
@@ -40,7 +59,7 @@ export default async function AdminPage({
     return (
       <main className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="text-2xl font-semibold">Admin</h1>
-        <p className="mt-3 text-sm text-gray-600">You are signed in, but your account is not an admin.</p>
+        <p className="mt-3 text-sm text-gray-600">Vous êtes connecté, mais votre compte n'est pas administrateur.</p>
       </main>
     );
   }
@@ -165,17 +184,17 @@ export default async function AdminPage({
     <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-600">Manage users and monitor overall platform activity.</p>
+          <h1 className="text-3xl font-semibold">Tableau de bord admin</h1>
+          <p className="mt-2 text-sm text-gray-600">Gérez les utilisateurs et suivez l'activité globale de la plateforme.</p>
         </div>
         <Link href="/" className="text-sm font-medium text-black underline">
-          Back to app
+          Retour à l'app
         </Link>
       </div>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-500">Total users</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Utilisateurs au total</p>
           <p className="mt-2 text-2xl font-semibold text-black">{totalUsers}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -183,38 +202,38 @@ export default async function AdminPage({
           <p className="mt-2 text-2xl font-semibold text-black">{adminUsers}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-500">Total tasks</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Tâches au total</p>
           <p className="mt-2 text-2xl font-semibold text-black">{totalTasks}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-500">Completed tasks</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Tâches terminées</p>
           <p className="mt-2 text-2xl font-semibold text-black">{completedTasks}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 sm:col-span-2 lg:col-span-4">
-          <p className="text-xs uppercase tracking-wide text-gray-500">Currently processing</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">En cours de traitement</p>
           <p className="mt-2 text-2xl font-semibold text-black">{activeTasks}</p>
         </div>
       </section>
 
       <section className="mt-8 rounded-lg border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-medium">Currently Processing Tasks</h2>
-          <p className="text-sm text-gray-600">Live queue across all users.</p>
+          <h2 className="text-lg font-medium">Tâches en cours</h2>
+          <p className="text-sm text-gray-600">File active pour tous les utilisateurs.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Task</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">User</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Updated</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Tâche</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Utilisateur</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Statut</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Mis à jour</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {processingNow.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-4 text-sm text-gray-600" colSpan={4}>No tasks are currently processing.</td>
+                  <td className="px-4 py-4 text-sm text-gray-600" colSpan={4}>Aucune tâche n'est en cours de traitement.</td>
                 </tr>
               ) : (
                 processingNow.map((task) => (
@@ -223,13 +242,13 @@ export default async function AdminPage({
                       <Link href={`/tasks/${task.id}`} className="text-sm font-medium text-black underline">
                         {task.id}
                       </Link>
-                      <p className="text-xs text-gray-600 truncate max-w-[420px]">{task.source?.title || "Untitled source"}</p>
+                      <p className="text-xs text-gray-600 truncate max-w-[420px]">{task.source?.title || "Source sans titre"}</p>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{task.user.email}</td>
                     <td className="px-4 py-3">
-                      <Badge className={statusBadgeClass(task.status)}>{task.status}</Badge>
+                      <Badge className={statusBadgeClass(task.status)}>{statusLabel(task.status)}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{task.updated_at.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{task.updated_at.toLocaleString("fr-FR")}</td>
                   </tr>
                 ))
               )}
@@ -239,18 +258,18 @@ export default async function AdminPage({
       </section>
       <section className="mt-8 rounded-lg border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-medium">Recent Generations</h2>
-          <p className="text-sm text-gray-600">Latest task activity across the platform.</p>
+          <h2 className="text-lg font-medium">Générations récentes</h2>
+          <p className="text-sm text-gray-600">Dernière activité des tâches sur la plateforme.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Task</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">User</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Tâche</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Utilisateur</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Statut</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Clips</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Created</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Créée</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
@@ -260,14 +279,14 @@ export default async function AdminPage({
                     <Link href={`/tasks/${task.id}`} className="text-sm font-medium text-black underline">
                       {task.id}
                     </Link>
-                    <p className="text-xs text-gray-600 truncate max-w-[420px]">{task.source?.title || "Untitled source"}</p>
+                    <p className="text-xs text-gray-600 truncate max-w-[420px]">{task.source?.title || "Source sans titre"}</p>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{task.user.email}</td>
                   <td className="px-4 py-3">
-                    <Badge className={statusBadgeClass(task.status)}>{task.status}</Badge>
+                    <Badge className={statusBadgeClass(task.status)}>{statusLabel(task.status)}</Badge>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{task.generated_clips_ids.length}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{task.created_at.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{task.created_at.toLocaleString("fr-FR")}</td>
                 </tr>
               ))}
             </tbody>
@@ -277,19 +296,19 @@ export default async function AdminPage({
 
       <section className="mt-8 rounded-lg border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-medium">Users</h2>
-          <p className="text-sm text-gray-600">Most recent users. Toggle admin access and inspect user tasks.</p>
+          <h2 className="text-lg font-medium">Utilisateurs</h2>
+          <p className="text-sm text-gray-600">Utilisateurs récents. Gérez l'accès admin et inspectez leurs tâches.</p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">User</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Plan</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Generations</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Created</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Utilisateur</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Offre</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Rôle</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Générations</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Créé</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">Action</th>
               </tr>
             </thead>
@@ -297,26 +316,26 @@ export default async function AdminPage({
               {recentUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-black">{user.name || "Unnamed user"}</p>
+                    <p className="text-sm font-medium text-black">{user.name || "Utilisateur sans nom"}</p>
                     <p className="text-xs text-gray-600">{user.email}</p>
                     <Link href={`/admin?user=${user.id}`} className="text-xs text-black underline">
-                      View user tasks
+                      Voir les tâches
                     </Link>
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className="capitalize">
-                      {user.plan}
+                      {planLabel(user.plan)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
                     {user.is_admin ? (
                       <Badge className="bg-black text-white">Admin</Badge>
                     ) : (
-                      <Badge variant="outline">User</Badge>
+                      <Badge variant="outline">Utilisateur</Badge>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{generationCountByUser.get(user.id) || 0}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{user.createdAt.toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{user.createdAt.toLocaleDateString("fr-FR")}</td>
                   <td className="px-4 py-3 text-right">
                     <AdminUserToggle
                       userId={user.id}
@@ -334,37 +353,37 @@ export default async function AdminPage({
       <section className="mt-8 rounded-lg border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-medium">User Task Explorer</h2>
-            <p className="text-sm text-gray-600">Inspect generations for a specific user.</p>
+            <h2 className="text-lg font-medium">Explorateur de tâches utilisateur</h2>
+            <p className="text-sm text-gray-600">Inspectez les générations d'un utilisateur précis.</p>
           </div>
           {selectedUserId && (
             <Link href="/admin" className="text-sm font-medium text-black underline">
-              Clear filter
+              Effacer le filtre
             </Link>
           )}
         </div>
 
         {!selectedUser ? (
-          <div className="px-4 py-5 text-sm text-gray-600">Select a user from the table above to view their tasks.</div>
+          <div className="px-4 py-5 text-sm text-gray-600">Sélectionnez un utilisateur dans le tableau ci-dessus pour voir ses tâches.</div>
         ) : (
           <div className="overflow-x-auto">
             <div className="px-4 py-3 text-sm text-gray-700 border-b border-gray-200">
-              Viewing: <span className="font-medium text-black">{selectedUser.name || selectedUser.email}</span> ({selectedUser.email})
+              Affichage : <span className="font-medium text-black">{selectedUser.name || selectedUser.email}</span> ({selectedUser.email})
             </div>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Task</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Tâche</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Source</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Statut</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Clips</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Created</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Créée</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {selectedUserTasks.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-4 text-sm text-gray-600" colSpan={5}>No tasks found for this user.</td>
+                    <td className="px-4 py-4 text-sm text-gray-600" colSpan={5}>Aucune tâche trouvée pour cet utilisateur.</td>
                   </tr>
                 ) : (
                   selectedUserTasks.map((task) => (
@@ -374,12 +393,12 @@ export default async function AdminPage({
                           {task.id}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{task.source?.title || "Untitled source"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{task.source?.title || "Source sans titre"}</td>
                       <td className="px-4 py-3">
-                        <Badge className={statusBadgeClass(task.status)}>{task.status}</Badge>
+                        <Badge className={statusBadgeClass(task.status)}>{statusLabel(task.status)}</Badge>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">{task.generated_clips_ids.length}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{task.created_at.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{task.created_at.toLocaleString("fr-FR")}</td>
                     </tr>
                   ))
                 )}

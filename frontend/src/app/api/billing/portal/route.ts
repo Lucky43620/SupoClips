@@ -7,12 +7,12 @@ import { getStripeClient } from "@/lib/stripe";
 
 export async function POST() {
   if (!monetizationEnabled) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise" }, { status: 401 });
   }
 
   const user = await prisma.user.findUnique({
@@ -24,7 +24,7 @@ export async function POST() {
   if (!customerId) {
     const fallbackUrl = process.env.STRIPE_CUSTOMER_PORTAL_URL;
     if (!fallbackUrl) {
-      return NextResponse.json({ error: "No Stripe customer found" }, { status: 400 });
+      return NextResponse.json({ error: "Aucun client Stripe trouvé" }, { status: 400 });
     }
     return NextResponse.json({ url: fallbackUrl });
   }

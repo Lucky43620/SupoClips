@@ -21,7 +21,7 @@ describe("/api/preferences", () => {
     const response = await GET(new Request("http://localhost/api/preferences") as never);
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: "Unauthorized" });
+    await expect(response.json()).resolves.toEqual({ error: "Connexion requise" });
   });
 
   it("returns user preferences for an authenticated user", async () => {
@@ -65,7 +65,7 @@ describe("/api/preferences", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Invalid fontColor (must be hex format like #FFFFFF)",
+      error: "Couleur de police invalide (format hexadécimal, ex. #FFFFFF)",
     });
   });
 
@@ -84,7 +84,7 @@ describe("/api/preferences", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Invalid notifyOnCompletion",
+      error: "Préférence de notification invalide",
     });
   });
 

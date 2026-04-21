@@ -7,12 +7,12 @@ import { getStripeClient } from "@/lib/stripe";
 
 export async function POST() {
   if (!monetizationEnabled) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id || !session.user.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise" }, { status: 401 });
   }
 
   const priceId = process.env.STRIPE_PRICE_ID;
@@ -20,7 +20,7 @@ export async function POST() {
     const fallbackUrl = process.env.STRIPE_CHECKOUT_URL;
     if (!fallbackUrl) {
       return NextResponse.json(
-        { error: "STRIPE_PRICE_ID or STRIPE_CHECKOUT_URL must be configured" },
+        { error: "STRIPE_PRICE_ID ou STRIPE_CHECKOUT_URL doit être configuré" },
         { status: 500 }
       );
     }
@@ -62,7 +62,7 @@ export async function POST() {
   });
 
   if (!checkoutSession.url) {
-    return NextResponse.json({ error: "Unable to create checkout session" }, { status: 500 });
+    return NextResponse.json({ error: "Impossible de créer la session de paiement" }, { status: 500 });
   }
 
   return NextResponse.json({ url: checkoutSession.url });

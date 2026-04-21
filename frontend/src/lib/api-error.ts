@@ -64,5 +64,5 @@ export function formatSupportMessage({ message, traceId }: ApiErrorInfo): string
     return message;
   }
 
-  return `${message} (Trace ID: ${traceId})`;
+  return `${message} (ID de trace : ${traceId})`;
 }

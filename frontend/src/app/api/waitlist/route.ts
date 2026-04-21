@@ -8,17 +8,17 @@ export async function POST(request: NextRequest) {
     const { email } = await request.json();
 
     if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+      return NextResponse.json({ error: "L'email est requis" }, { status: 400 });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
     }
 
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
-      return NextResponse.json({ error: "Email service is not configured" }, { status: 503 });
+      return NextResponse.json({ error: "Le service d'email n'est pas configuré" }, { status: 503 });
     }
 
     const resend = new Resend(resendApiKey);
@@ -26,24 +26,24 @@ export async function POST(request: NextRequest) {
     const { error } = await resend.emails.send({
       from: "SupoClip <noreply@shiori.ai>",
       to: [normalizedEmail],
-      subject: "Welcome to the SupoClip waitlist",
+      subject: "Bienvenue sur la liste d'attente SupoClip",
       html: `
-        <p>Thanks for joining the SupoClip waitlist.</p>
-        <p>We will email you when early access is available.</p>
+        <p>Merci d'avoir rejoint la liste d'attente SupoClip.</p>
+        <p>Nous vous écrirons dès que l'accès anticipé sera disponible.</p>
       `,
     });
 
     if (error) {
       console.error("Resend error:", error);
       return NextResponse.json(
-        { error: "Failed to send confirmation email" },
+        { error: "Impossible d'envoyer l'email de confirmation" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ message: "Successfully added to waitlist" });
+    return NextResponse.json({ message: "Ajouté à la liste d'attente avec succès" });
   } catch (error) {
     console.error("Waitlist signup error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

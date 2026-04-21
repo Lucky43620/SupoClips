@@ -8,9 +8,9 @@ export default function SignUpPage() {
         <SignUp />
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            Already have an account?{" "}
+            Vous avez déjà un compte ?{" "}
             <Link href="/sign-in" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign in
+              Se connecter
             </Link>
           </p>
         </div>

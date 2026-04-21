@@ -87,6 +87,19 @@ const EXPORT_DIMENSIONS = {
   shorts: { width: 1080, height: 1920 },
 } as const;
 
+function getStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    completed: "Terminé",
+    processing: "Traitement",
+    queued: "En file",
+    pending: "En attente",
+    error: "Erreur",
+    failed: "Échec",
+    cancelled: "Annulé",
+  };
+  return labels[status] || status;
+}
+
 export default function TaskEditPage() {
   const params = useParams();
   const { data: session } = useSession();
@@ -177,7 +190,7 @@ export default function TaskEditPage() {
     try {
       const taskResponse = await fetch(`${taskApiUrl}/${params.id}`, { cache: "no-store" });
       if (!taskResponse.ok) {
-        throw new Error(await buildSupportError(taskResponse, `Failed to fetch task: ${taskResponse.status}`));
+        throw new Error(await buildSupportError(taskResponse, `Impossible de récupérer la tâche : ${taskResponse.status}`));
       }
 
       const taskData = (await taskResponse.json()) as TaskDetails;
@@ -190,7 +203,7 @@ export default function TaskEditPage() {
 
       const clipsResponse = await fetch(`${taskApiUrl}/${params.id}/clips`, { cache: "no-store" });
       if (!clipsResponse.ok) {
-        throw new Error(await buildSupportError(clipsResponse, `Failed to fetch clips: ${clipsResponse.status}`));
+        throw new Error(await buildSupportError(clipsResponse, `Impossible de récupérer les clips : ${clipsResponse.status}`));
       }
 
       const clipsData = await clipsResponse.json();
@@ -204,7 +217,7 @@ export default function TaskEditPage() {
 
       setMergeSelection((current) => current.filter((id) => nextClips.some((clip) => clip.id === id)));
     } catch (fetchError) {
-      setError(fetchError instanceof Error ? fetchError.message : "Failed to load editor");
+      setError(fetchError instanceof Error ? fetchError.message : "Impossible de charger l'éditeur");
     }
   }, [buildSupportError, params.id, taskApiUrl]);
 
@@ -264,7 +277,7 @@ export default function TaskEditPage() {
         },
         body: JSON.stringify({ start_offset: startOffset, end_offset: endOffset }),
       });
-      if (!response.ok) throw new Error(await buildSupportError(response, "Failed to trim clip"));
+      if (!response.ok) throw new Error(await buildSupportError(response, "Impossible de rogner le clip"));
     });
   };
 
@@ -279,7 +292,7 @@ export default function TaskEditPage() {
         },
         body: JSON.stringify({ split_time: Number(value.toFixed(2)) }),
       });
-      if (!response.ok) throw new Error(await buildSupportError(response, "Failed to split clip"));
+      if (!response.ok) throw new Error(await buildSupportError(response, "Impossible de couper le clip"));
     });
   };
 
@@ -298,7 +311,7 @@ export default function TaskEditPage() {
           highlight_words: highlightWords,
         }),
       });
-      if (!response.ok) throw new Error(await buildSupportError(response, "Failed to update captions"));
+      if (!response.ok) throw new Error(await buildSupportError(response, "Impossible de mettre à jour les sous-titres"));
     });
   };
 
@@ -312,7 +325,7 @@ export default function TaskEditPage() {
         },
         body: JSON.stringify({ clip_ids: mergeSelection }),
       });
-      if (!response.ok) throw new Error(await buildSupportError(response, "Failed to merge selected clips"));
+      if (!response.ok) throw new Error(await buildSupportError(response, "Impossible de fusionner les clips sélectionnés"));
     });
     setMergeSelection([]);
   };
@@ -325,7 +338,7 @@ export default function TaskEditPage() {
     try {
       const sourceResponse = await fetch(`${apiUrl}${selectedClip.video_url}`);
       if (!sourceResponse.ok) {
-        throw new Error(`Failed to fetch source clip: ${sourceResponse.status}`);
+        throw new Error(`Impossible de récupérer le clip source : ${sourceResponse.status}`);
       }
 
       const sourceBlob = await sourceResponse.blob();
@@ -583,16 +596,16 @@ export default function TaskEditPage() {
               <Link href={`/tasks/${params.id}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="w-4 h-4" />
-                  Back to Task
+                  Retour à la tâche
                 </Button>
               </Link>
-              <Badge variant="outline">Studio Editor</Badge>
+              <Badge variant="outline">Studio d'édition</Badge>
             </div>
-            <h1 className="text-2xl font-bold text-black">{task?.source_title || "Clip Editor"}</h1>
+            <h1 className="text-2xl font-bold text-black">{task?.source_title || "Éditeur de clips"}</h1>
           </div>
           <Button onClick={handleExport} disabled={!selectedClip || isSaving}>
             <Download className="w-4 h-4" />
-            {exportProgress !== null ? `Exporting ${exportProgress}%` : "Export Selected"}
+            {exportProgress !== null ? `Export ${exportProgress}%` : "Exporter la sélection"}
           </Button>
         </div>
       </div>
@@ -606,24 +619,24 @@ export default function TaskEditPage() {
 
         {!task ? (
           <Alert>
-            <AlertDescription>Task not found.</AlertDescription>
+            <AlertDescription>Tâche introuvable.</AlertDescription>
           </Alert>
         ) : task.status !== "completed" ? (
           <Card>
             <CardContent className="p-8 text-center space-y-3">
-              <p className="text-lg font-semibold">This editor is available once processing completes.</p>
-              <p className="text-gray-600">Current status: {task.status}</p>
+              <p className="text-lg font-semibold">Cet éditeur est disponible une fois le traitement terminé.</p>
+              <p className="text-gray-600">Statut actuel : {getStatusLabel(task.status)}</p>
               <Link href={`/tasks/${task.id}`}>
-                <Button variant="outline">Return to Task</Button>
+                <Button variant="outline">Retour à la tâche</Button>
               </Link>
             </CardContent>
           </Card>
         ) : clips.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center space-y-3">
-              <p className="text-lg font-semibold">No clips to edit yet.</p>
+              <p className="text-lg font-semibold">Aucun clip à modifier pour le moment.</p>
               <Link href={`/tasks/${task.id}`}>
-                <Button variant="outline">Return to Task</Button>
+                <Button variant="outline">Retour à la tâche</Button>
               </Link>
             </CardContent>
           </Card>
@@ -665,15 +678,15 @@ export default function TaskEditPage() {
                               );
                             })
                           ) : (
-                            <span>Subtitle preview</span>
+                            <span>Aperçu des sous-titres</span>
                           )}
                         </div>
                       </div>
 
                       <div className="border rounded-lg p-3 space-y-3">
                         <div className="flex items-center justify-between text-sm text-gray-600">
-                          <span>Playhead: {formatDuration(currentTime)} / {formatDuration(selectedClip.duration)}</span>
-                          <span>{isPlaying ? "Playing" : "Paused"}</span>
+                          <span>Tête de lecture : {formatDuration(currentTime)} / {formatDuration(selectedClip.duration)}</span>
+                          <span>{isPlaying ? "Lecture" : "Pause"}</span>
                         </div>
 
                         <Slider
@@ -687,14 +700,14 @@ export default function TaskEditPage() {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                           <Button variant="outline" size="sm" onClick={() => seekTo(Math.max(0, currentTime - 1))}>-1s</Button>
                           <Button variant="outline" size="sm" onClick={() => seekTo(Math.min(selectedClip.duration, currentTime + 1))}>+1s</Button>
-                          <Button variant="outline" size="sm" onClick={setTrimInToPlayhead}>Set In</Button>
-                          <Button variant="outline" size="sm" onClick={setTrimOutToPlayhead}>Set Out</Button>
+                          <Button variant="outline" size="sm" onClick={setTrimInToPlayhead}>Point entrée</Button>
+                          <Button variant="outline" size="sm" onClick={setTrimOutToPlayhead}>Point sortie</Button>
                         </div>
                       </div>
 
                       <div className="border rounded-lg p-3 space-y-3">
                         <div className="flex items-center justify-between text-sm text-gray-700">
-                          <span className="font-medium">Trim Range</span>
+                          <span className="font-medium">Plage de rognage</span>
                           <span>{formatDuration(trimRange[0])} - {formatDuration(trimRange[1])}</span>
                         </div>
                         <Slider
@@ -707,15 +720,15 @@ export default function TaskEditPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <Button onClick={handleTrim} disabled={isSaving}>
                             <Scissors className="w-4 h-4" />
-                            Apply Trim
+                            Appliquer le rognage
                           </Button>
-                          <Button variant="outline" onClick={() => seekTo(trimRange[0])}>Jump In</Button>
-                          <Button variant="outline" onClick={() => seekTo(trimRange[1])}>Jump Out</Button>
+                          <Button variant="outline" onClick={() => seekTo(trimRange[0])}>Aller à l'entrée</Button>
+                          <Button variant="outline" onClick={() => seekTo(trimRange[1])}>Aller à la sortie</Button>
                         </div>
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-600">Select a clip to start editing.</p>
+                    <p className="text-sm text-gray-600">Sélectionnez un clip pour commencer l'édition.</p>
                   )}
                 </CardContent>
               </Card>
@@ -725,13 +738,13 @@ export default function TaskEditPage() {
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Layers className="w-4 h-4" />
-                      Fine Controls
+                      Contrôles précis
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2"><SplitSquareVertical className="w-4 h-4" />Split</span>
+                        <span className="flex items-center gap-2"><SplitSquareVertical className="w-4 h-4" />Coupe</span>
                         <span>{splitTime.toFixed(2)}s</span>
                       </div>
                       <Slider
@@ -742,8 +755,8 @@ export default function TaskEditPage() {
                         onValueChange={(value) => setSplitTime(value[0] || MIN_GAP_SECONDS)}
                       />
                       <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" onClick={() => setSplitTime(currentTime)} disabled={!selectedClip}>Set to Playhead</Button>
-                        <Button variant="outline" onClick={() => void handleSplit()} disabled={isSaving || !selectedClip}>Split Clip</Button>
+                        <Button variant="outline" onClick={() => setSplitTime(currentTime)} disabled={!selectedClip}>À la position</Button>
+                        <Button variant="outline" onClick={() => void handleSplit()} disabled={isSaving || !selectedClip}>Couper le clip</Button>
                       </div>
                     </div>
 
@@ -758,25 +771,25 @@ export default function TaskEditPage() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs text-gray-600">
-                          <span>Playback Rate</span>
+                          <span>Vitesse de lecture</span>
                           <span>{playbackRate.toFixed(2)}x</span>
                         </div>
                         <Slider min={0.5} max={2} step={0.05} value={[playbackRate]} onValueChange={(v) => setPlaybackRate(v[0] || 1)} />
                       </div>
                       <Button variant="outline" className="w-full" onClick={() => setIsMuted((m) => !m)}>
                         {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        {isMuted ? "Unmute" : "Mute"}
+                        {isMuted ? "Réactiver le son" : "Couper le son"}
                       </Button>
                     </div>
 
                     <div className="space-y-3">
-                      <div className="text-sm font-medium flex items-center gap-2"><Palette className="w-4 h-4" />Video FX</div>
+                      <div className="text-sm font-medium flex items-center gap-2"><Palette className="w-4 h-4" />Effets vidéo</div>
                       {[
-                        ["Brightness", "brightness", 40, 180, 1],
-                        ["Contrast", "contrast", 40, 180, 1],
+                        ["Luminosité", "brightness", 40, 180, 1],
+                        ["Contraste", "contrast", 40, 180, 1],
                         ["Saturation", "saturation", 0, 220, 1],
-                        ["Blur", "blur", 0, 8, 0.1],
-                        ["Hue", "hue", -180, 180, 1],
+                        ["Flou", "blur", 0, 8, 0.1],
+                        ["Teinte", "hue", -180, 180, 1],
                         ["Zoom", "zoom", 1, 2, 0.01],
                       ].map(([label, key, min, max, step]) => {
                         const typedKey = key as keyof VideoFx;
@@ -801,7 +814,7 @@ export default function TaskEditPage() {
 
                     <Button variant="outline" className="w-full" onClick={resetPreviewAdjustments}>
                       <Gauge className="w-4 h-4" />
-                      Reset Preview Adjustments
+                      Réinitialiser l'aperçu
                     </Button>
                   </CardContent>
                 </Card>
@@ -810,14 +823,14 @@ export default function TaskEditPage() {
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Subtitles className="w-4 h-4" />
-                      Subtitle Control
+                      Contrôle des sous-titres
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <textarea
                       value={captionText}
                       onChange={(e) => setCaptionText(e.target.value)}
-                      placeholder="Edit subtitle script"
+                      placeholder="Modifier le texte des sous-titres"
                       className="w-full min-h-24 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                     />
 
@@ -827,15 +840,15 @@ export default function TaskEditPage() {
                           <SelectValue placeholder="Position" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="top">Top</SelectItem>
-                          <SelectItem value="middle">Middle</SelectItem>
-                          <SelectItem value="bottom">Bottom</SelectItem>
+                          <SelectItem value="top">Haut</SelectItem>
+                          <SelectItem value="middle">Milieu</SelectItem>
+                          <SelectItem value="bottom">Bas</SelectItem>
                         </SelectContent>
                       </Select>
 
                       <Select value={exportPreset} onValueChange={setExportPreset}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Preset" />
+                          <SelectValue placeholder="Format" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="tiktok">TikTok</SelectItem>
@@ -847,7 +860,7 @@ export default function TaskEditPage() {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>Subtitle Size</span>
+                        <span>Taille des sous-titres</span>
                         <span>{subtitleSize}</span>
                       </div>
                       <Slider min={28} max={88} step={1} value={[subtitleSize]} onValueChange={(v) => setSubtitleSize(v[0] || 52)} />
@@ -855,17 +868,17 @@ export default function TaskEditPage() {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>Vertical Offset</span>
+                        <span>Décalage vertical</span>
                         <span>{subtitleY}%</span>
                       </div>
                       <Slider min={10} max={85} step={1} value={[subtitleY]} onValueChange={(v) => setSubtitleY(v[0] || 78)} />
                     </div>
 
                     <div className="space-y-2">
-                      <div className="text-xs text-gray-600">Highlight words (click to toggle)</div>
+                      <div className="text-xs text-gray-600">Mots à surligner (cliquez pour activer/désactiver)</div>
                       <div className="max-h-28 overflow-y-auto rounded-md border border-gray-200 p-2 flex flex-wrap gap-1.5">
                         {subtitleWords.length === 0 ? (
-                          <span className="text-xs text-gray-500">No words yet.</span>
+                          <span className="text-xs text-gray-500">Aucun mot pour le moment.</span>
                         ) : (
                           subtitleWords.map((word, index) => {
                             const cleaned = word.toLowerCase().replace(/[^a-z0-9']/g, "");
@@ -888,7 +901,7 @@ export default function TaskEditPage() {
                     </div>
 
                     <Button onClick={handleUpdateCaptions} disabled={isSaving || !selectedClip} className="w-full">
-                      Save Subtitle Changes
+                      Enregistrer les sous-titres
                     </Button>
                   </CardContent>
                 </Card>
@@ -906,7 +919,7 @@ export default function TaskEditPage() {
                 {mergeSelection.length >= 2 && (
                   <div className="flex justify-end">
                     <Button variant="outline" onClick={handleMerge} disabled={isSaving}>
-                      Merge Selected ({mergeSelection.length})
+                      Fusionner la sélection ({mergeSelection.length})
                     </Button>
                   </div>
                 )}
@@ -931,7 +944,7 @@ export default function TaskEditPage() {
                           </div>
                           <label className="flex items-center gap-1 text-xs text-gray-600" onClick={(e) => e.stopPropagation()}>
                             <input type="checkbox" checked={isSelectedForMerge} onChange={() => toggleMergeSelection(clip.id)} />
-                            Merge
+                            Fusionner
                           </label>
                         </div>
                       </button>

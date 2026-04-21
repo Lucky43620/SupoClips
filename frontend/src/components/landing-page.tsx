@@ -79,39 +79,39 @@ function ScrollReveal({
 const FEATURES = [
   {
     icon: ScanFace,
-    title: "Face-Centered Cropping",
+    title: "Recadrage centré sur le visage",
     description:
-      "MediaPipe + OpenCV detects and tracks faces for perfect 9:16 vertical framing.",
+      "MediaPipe + OpenCV détectent et suivent les visages pour un cadrage vertical 9:16 propre.",
   },
   {
     icon: Type,
-    title: "Word-Synced Subtitles",
+    title: "Sous-titres synchronisés",
     description:
-      "Word-level timestamps power perfectly timed, animated captions on every clip.",
+      "Les timestamps mot par mot permettent des sous-titres animés et parfaitement calés.",
   },
   {
     icon: Target,
-    title: "Virality Scoring",
+    title: "Score de viralité",
     description:
-      "AI rates hook, engagement, value, and shareability — scored 0 to 100.",
+      "L'IA note l'accroche, l'engagement, la valeur et le potentiel de partage de 0 à 100.",
   },
   {
     icon: Film,
-    title: "B-Roll Overlays",
+    title: "B-roll automatique",
     description:
-      "Automatically source and overlay relevant stock footage from Pexels.",
+      "Ajoute automatiquement des plans d'illustration pertinents depuis Pexels.",
   },
   {
     icon: Sparkles,
-    title: "Caption Templates",
+    title: "Templates de sous-titres",
     description:
-      "Multiple animation styles and font presets to match your brand.",
+      "Plusieurs styles d'animation et presets de polices pour coller à votre identité.",
   },
   {
     icon: MonitorPlay,
-    title: "Platform Export",
+    title: "Export par plateforme",
     description:
-      "One-click presets for TikTok, Reels, and Shorts with optimized encoding.",
+      "Des presets TikTok, Reels et Shorts avec un encodage optimisé.",
   },
 ];
 
@@ -121,22 +121,22 @@ function getPlans() {
   const proLimit = parseInt(process.env.NEXT_PUBLIC_PRO_PLAN_TASK_LIMIT || "0", 10);
 
   const proGenerationsLabel =
-    proLimit === 0 ? "Unlimited generations" : `${proLimit} generations per month`;
+    proLimit === 0 ? "Générations illimitées" : `${proLimit} générations par mois`;
 
   return [
     {
-      name: "Self-Hosted",
+      name: "Auto-hébergé",
       price: "$0",
-      period: "forever",
-      description: "Run on your own infrastructure with full control.",
+      period: "à vie",
+      description: "Lancez l'app sur votre propre infrastructure, avec le contrôle total.",
       features: [
-        "Face-centered cropping",
-        "Word-synced subtitles",
-        "Virality scoring",
-        "All export presets",
-        "Full source code access",
+        "Recadrage centré sur le visage",
+        "Sous-titres synchronisés",
+        "Score de viralité",
+        "Tous les presets d'export",
+        "Accès complet au code source",
       ],
-      cta: "View on GitHub",
+      cta: "Voir sur GitHub",
       ctaHref: "https://github.com/FujiwaraChoki/supoclip",
       highlighted: false,
       isUnlimited: false,
@@ -144,18 +144,18 @@ function getPlans() {
     {
       name: "Pro",
       price: `$${proPriceMonthly}`,
-      period: "/month",
-      description: "For power users who clip daily and need more generations.",
+      period: "/mois",
+      description: "Pour les utilisateurs intensifs qui génèrent des clips tous les jours.",
       features: [
         proGenerationsLabel,
-        "Everything in Free",
-        "B-Roll overlays",
-        "Caption templates",
-        "Platform export presets",
-        "Priority processing",
-        "Early access to new features",
+        "Tout ce qui est inclus en gratuit",
+        "B-roll automatique",
+        "Templates de sous-titres",
+        "Presets d'export par plateforme",
+        "Traitement prioritaire",
+        "Accès anticipé aux nouveautés",
       ],
-      cta: "Upgrade to Pro",
+      cta: "Passer à Pro",
       ctaHref: "",
       highlighted: true,
       isUnlimited: proLimit === 0,
@@ -166,23 +166,23 @@ function getPlans() {
 const STEPS = [
   {
     num: "01",
-    title: "Drop a link or file",
+    title: "Déposez un lien ou un fichier",
     description:
-      "Paste any YouTube URL or drag-and-drop your own video file.",
+      "Collez une URL YouTube ou glissez-déposez votre propre fichier vidéo.",
     icon: Youtube,
   },
   {
     num: "02",
-    title: "AI finds the gold",
+    title: "L'IA repère les meilleurs moments",
     description:
-      "Transcription, virality scoring, and segment detection surface the best moments.",
+      "Transcription, score de viralité et détection de segments font ressortir les passages forts.",
     icon: Wand2,
   },
   {
     num: "03",
-    title: "Export & publish",
+    title: "Exportez et publiez",
     description:
-      "Get vertical, captioned, face-tracked clips ready for every platform.",
+      "Obtenez des clips verticaux sous-titrés, prêts pour chaque plateforme.",
     icon: Share2,
   },
 ];
@@ -233,25 +233,25 @@ export default function LandingPage() {
               href="#how-it-works"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              How It Works
+              Fonctionnement
             </a>
             <a
               href="#features"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Features
+              Fonctionnalités
             </a>
             <a
               href="#pricing"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Pricing
+              Tarifs
             </a>
             <a
               href="#open-source"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Open Source
+              Open source
             </a>
           </div>
 
@@ -261,17 +261,17 @@ export default function LandingPage() {
               <>
                 <Link href="/sign-in">
                   <Button variant="ghost" size="sm">
-                    Sign In
+                    Se connecter
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button size="sm">Get Started</Button>
+                  <Button size="sm">Commencer</Button>
                 </Link>
               </>
             ) : (
               <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                 <Button size="sm">
-                  Open Hosted App
+                  Ouvrir l'app hébergée
                   <ExternalLink className="w-3.5 h-3.5" />
                 </Button>
               </a>
@@ -284,7 +284,7 @@ export default function LandingPage() {
             size="sm"
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
             className="md:hidden p-2"
-            aria-label="Toggle menu"
+            aria-label="Ouvrir ou fermer le menu"
           >
             {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
@@ -299,28 +299,28 @@ export default function LandingPage() {
                 onClick={() => setMobileNavOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
-                How It Works
+                Fonctionnement
               </a>
               <a
                 href="#features"
                 onClick={() => setMobileNavOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
-                Features
+                Fonctionnalités
               </a>
               <a
                 href="#pricing"
                 onClick={() => setMobileNavOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
-                Pricing
+                Tarifs
               </a>
               <a
                 href="#open-source"
                 onClick={() => setMobileNavOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
-                Open Source
+                Open source
               </a>
               <Separator className="my-2" />
               <div className="flex flex-col gap-2 px-3 pt-1">
@@ -328,17 +328,17 @@ export default function LandingPage() {
                   <>
                     <Link href="/sign-in" onClick={() => setMobileNavOpen(false)}>
                       <Button variant="outline" size="sm" className="w-full">
-                        Sign In
+                        Se connecter
                       </Button>
                     </Link>
                     <Link href="/sign-up" onClick={() => setMobileNavOpen(false)}>
-                      <Button size="sm" className="w-full">Get Started</Button>
+                      <Button size="sm" className="w-full">Commencer</Button>
                     </Link>
                   </>
                 ) : (
                   <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" className="w-full">
-                      Open Hosted App
+                      Ouvrir l'app hébergée
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
                   </a>
@@ -371,7 +371,7 @@ export default function LandingPage() {
                 style={{ animation: "landing-fade-in-up 0.6s ease-out both" }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                Open Source & Self-Hostable
+                Open source et auto-hébergeable
               </Badge>
 
               <h1
@@ -382,9 +382,9 @@ export default function LandingPage() {
                   animation: "landing-fade-in-up 0.6s ease-out 0.1s both",
                 }}
               >
-                From long video
+                De la longue vidéo
                 <br />
-                to viral clips
+                aux clips viraux
               </h1>
 
               <p
@@ -393,9 +393,9 @@ export default function LandingPage() {
                   animation: "landing-fade-in-up 0.6s ease-out 0.2s both",
                 }}
               >
-                AI-powered clipping that transcribes, scores virality, crops for
-                vertical, adds word-synced captions, and exports platform-ready
-                shorts.
+                Un outil de clipping IA qui transcrit, note le potentiel viral,
+                recadre en vertical, ajoute des sous-titres synchronisés et exporte
+                des shorts prêts à publier.
               </p>
 
               <div
@@ -407,14 +407,14 @@ export default function LandingPage() {
                 {authEnabled ? (
                   <Link href="/sign-up">
                     <Button size="lg" className="px-8 h-12 text-sm">
-                      Start Clipping
+                      Commencer à créer des clips
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </Link>
                 ) : (
                   <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" className="px-8 h-12 text-sm">
-                      Use Hosted App
+                      Utiliser l'app hébergée
                       <ExternalLink className="w-4 h-4" />
                     </Button>
                   </a>
@@ -426,7 +426,7 @@ export default function LandingPage() {
                 >
                   <Button variant="outline" size="lg" className="px-8 h-12 text-sm">
                     <Github className="w-4 h-4" />
-                    View Source
+                    Voir le code
                   </Button>
                 </a>
               </div>
@@ -438,9 +438,9 @@ export default function LandingPage() {
                 }}
               >
                 {[
-                  { icon: ScanFace, label: "9:16 Auto-Crop" },
-                  { icon: Type, label: "Word-Synced Captions" },
-                  { icon: Target, label: "Virality Scoring" },
+                  { icon: ScanFace, label: "Auto-recadrage 9:16" },
+                  { icon: Type, label: "Sous-titres synchronisés" },
+                  { icon: Target, label: "Score de viralité" },
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-center gap-1.5">
                     <Icon className="w-3.5 h-3.5" />
@@ -472,7 +472,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <ScrollReveal className="text-center mb-14">
             <p className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3">
-              How It Works
+              Fonctionnement
             </p>
             <h2
               className="text-3xl sm:text-4xl font-bold tracking-tight"
@@ -481,7 +481,7 @@ export default function LandingPage() {
                   "var(--font-syne), var(--font-geist-sans), system-ui",
               }}
             >
-              Three steps. Zero effort.
+              Trois étapes. Zéro friction.
             </h2>
           </ScrollReveal>
 
@@ -523,7 +523,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <ScrollReveal className="text-center mb-14">
             <p className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3">
-              Features
+              Fonctionnalités
             </p>
             <h2
               className="text-3xl sm:text-4xl font-bold tracking-tight mb-4"
@@ -532,11 +532,11 @@ export default function LandingPage() {
                   "var(--font-syne), var(--font-geist-sans), system-ui",
               }}
             >
-              Everything you need to go viral
+              Tout ce qu'il faut pour créer des clips efficaces
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Professional-grade video clipping with AI intelligence at every
-              step of the pipeline.
+              Du clipping vidéo de qualité pro, avec de l'IA à chaque étape du
+              pipeline.
             </p>
           </ScrollReveal>
 
@@ -577,7 +577,7 @@ export default function LandingPage() {
         <div className="relative max-w-5xl mx-auto px-6">
           <ScrollReveal className="text-center mb-16">
             <p className="text-xs font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3">
-              Pricing
+              Tarifs
             </p>
             <h2
               className="text-3xl sm:text-4xl font-bold tracking-tight mb-4"
@@ -586,11 +586,11 @@ export default function LandingPage() {
                   "var(--font-syne), var(--font-geist-sans), system-ui",
               }}
             >
-              Simple pricing, no surprises
+              Des tarifs simples, sans surprise
             </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Start free. Upgrade when you need unlimited power.
-              Self-hosters get everything free, always.
+              Commencez gratuitement. Passez à Pro quand vous avez besoin de plus.
+              En auto-hébergement, tout reste gratuit et illimité.
             </p>
           </ScrollReveal>
 
@@ -608,7 +608,7 @@ export default function LandingPage() {
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                       <Badge className="bg-foreground text-background border-0 shadow-md gap-1.5 px-3 py-1">
                         <Zap className="w-3 h-3" />
-                        Most Popular
+                        Le plus populaire
                       </Badge>
                     </div>
                   )}
@@ -667,7 +667,7 @@ export default function LandingPage() {
                                 : ""
                             }
                           >
-                            {plan.isUnlimited && feature.includes("Unlimited") ? (
+                            {plan.isUnlimited && feature.includes("illimitées") ? (
                               <span className="flex items-center gap-1.5 font-medium">
                                 <Infinity className="w-3.5 h-3.5" />
                                 {feature}
@@ -726,7 +726,7 @@ export default function LandingPage() {
                           variant={plan.highlighted ? "secondary" : "default"}
                           size="lg"
                         >
-                          Use Hosted App
+                          Utiliser l'app hébergée
                           <ExternalLink className="w-4 h-4" />
                         </Button>
                       </a>
@@ -739,12 +739,12 @@ export default function LandingPage() {
 
           <ScrollReveal delay={0.3}>
             <p className="text-center text-xs text-muted-foreground mt-10 max-w-md mx-auto">
-              Self-hosting? All features are free and unlimited.{" "}
+              Vous auto-hébergez l'app ? Toutes les fonctionnalités sont gratuites et illimitées.{" "}
               <a
                 href="#open-source"
                 className="underline underline-offset-2 hover:text-foreground transition-colors"
               >
-                See setup instructions
+                Voir les instructions d'installation
               </a>
               .
             </p>
@@ -760,17 +760,17 @@ export default function LandingPage() {
           <ScrollReveal className="text-center mb-10">
             <Badge variant="outline" className="mb-6 gap-1.5">
               <Github className="w-3.5 h-3.5" />
-              AGPL-3.0 Licensed
+              Licence AGPL-3.0
             </Badge>
             <h2
               className="text-3xl sm:text-4xl font-bold tracking-tight mb-4"
               style={{ fontFamily: "var(--font-syne), system-ui" }}
             >
-              Built in the open
+              Développé ouvertement
             </h2>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              Fully open source. Self-host on your infrastructure, contribute
-              features, or fork it and make it yours.
+              Entièrement open source. Hébergez-le sur votre infrastructure,
+              contribuez ou forkez-le pour l'adapter à vos besoins.
             </p>
           </ScrollReveal>
 
@@ -778,7 +778,7 @@ export default function LandingPage() {
             <Card className="py-0 gap-0">
               <CardContent className="p-6 md:p-8">
                 <p className="text-xs font-medium text-muted-foreground mb-3">
-                  Get running in 30 seconds:
+                  Lancez-le en 30 secondes :
                 </p>
                 <div className="bg-primary text-primary-foreground rounded-lg p-5 font-mono text-sm leading-loose overflow-x-auto">
                   <div>
@@ -807,21 +807,21 @@ export default function LandingPage() {
                   >
                     <Button>
                       <Github className="w-4 h-4" />
-                      View on GitHub
+                      Voir sur GitHub
                       <ExternalLink className="w-3.5 h-3.5 opacity-50" />
                     </Button>
                   </a>
                   {authEnabled ? (
                     <Link href="/sign-up">
                       <Button variant="outline">
-                        Try the hosted version
+                        Essayer la version hébergée
                         <ArrowRight className="w-4 h-4" />
                       </Button>
                     </Link>
                   ) : (
                     <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                       <Button variant="outline">
-                        Open hosted version
+                        Ouvrir la version hébergée
                         <ExternalLink className="w-4 h-4" />
                       </Button>
                     </a>
@@ -842,23 +842,23 @@ export default function LandingPage() {
             className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6"
             style={{ fontFamily: "var(--font-syne), system-ui" }}
           >
-            Ready to clip?
+            Prêt à créer des clips ?
           </h2>
           <p className="text-base text-muted-foreground mb-8">
-            Turn your next video into scroll-stopping shorts. Free, open source,
-            no credit card required.
+            Transformez votre prochaine vidéo en shorts qui accrochent. Gratuit,
+            open source, sans carte bancaire.
           </p>
           {authEnabled ? (
             <Link href="/sign-up">
               <Button size="lg" className="px-10 h-12 text-sm">
-                Get Started Free
+                Commencer gratuitement
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           ) : (
             <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="px-10 h-12 text-sm">
-                Open Hosted App
+                Ouvrir l'app hébergée
                 <ExternalLink className="w-4 h-4" />
               </Button>
             </a>
@@ -991,17 +991,17 @@ function HeroVisual() {
               {
                 bg: "linear-gradient(135deg, #e8e5e0, #d6d3cd)",
                 score: 92,
-                label: "Hook moment",
+                label: "Moment d'accroche",
               },
               {
                 bg: "linear-gradient(135deg, #dfe0e4, #cdd0d6)",
                 score: 87,
-                label: "Key insight",
+                label: "Idée clé",
               },
               {
                 bg: "linear-gradient(135deg, #e4e2df, #d3d0cb)",
                 score: 78,
-                label: "CTA close",
+                label: "CTA final",
               },
             ].map((clip, i) => (
               <div
