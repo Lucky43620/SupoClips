@@ -45,12 +45,6 @@ class Config:
             os.getenv("QUEUED_TASK_TIMEOUT_SECONDS", "180")
         )
 
-        self.self_host = self._get_bool_env("SELF_HOST", True)
-        self.monetization_enabled = not self.self_host
-        self.backend_auth_secret = self._get_optional_env("BACKEND_AUTH_SECRET")
-        self.auth_signature_ttl_seconds = int(
-            os.getenv("AUTH_SIGNATURE_TTL_SECONDS", "300")
-        )
         self.cors_origins = self._get_csv_env(
             "CORS_ORIGINS",
             [
@@ -58,15 +52,9 @@ class Config:
                 "http://sp.localhost:3000",
             ],
         )
-        self.resend_api_key = self._get_optional_env("RESEND_API_KEY")
-        self.resend_from_email = os.getenv(
-            "RESEND_FROM_EMAIL", "SupoClip <onboarding@resend.dev>"
-        )
         self.app_base_url = (
             self._get_optional_env("NEXT_PUBLIC_APP_URL") or "http://localhost:3000"
         ).rstrip("/")
-        self.discord_feedback_webhook_url = self._get_optional_env("DISCORD_FEEDBACK_WEBHOOK_URL")
-        self.discord_sales_webhook_url = self._get_optional_env("DISCORD_SALES_WEBHOOK_URL")
         self.default_processing_mode = os.getenv("DEFAULT_PROCESSING_MODE", "fast")
         self.fast_mode_max_clips = int(os.getenv("FAST_MODE_MAX_CLIPS", "4"))
         self.fast_mode_transcript_model = os.getenv(
@@ -81,18 +69,6 @@ class Config:
 
         normalized = value.strip()
         return normalized or None
-
-    @staticmethod
-    def _get_bool_env(name: str, default: bool) -> bool:
-        value = os.getenv(name)
-        if value is None:
-            return default
-        normalized = value.strip().lower()
-        if normalized in {"1", "true", "yes", "on"}:
-            return True
-        if normalized in {"0", "false", "no", "off"}:
-            return False
-        return default
 
     @staticmethod
     def _get_csv_env(name: str, default: list[str]) -> list[str]:

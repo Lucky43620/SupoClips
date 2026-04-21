@@ -10,24 +10,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { signOut, useSession } from "@/lib/auth-client";
-import { track } from "@/lib/datafast";
 import Link from "next/link";
-import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft, Mail } from "lucide-react";
+import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft } from "lucide-react";
 
 interface UserPreferences {
   fontFamily: string;
   fontSize: number;
   fontColor: string;
-  notifyOnCompletion: boolean;
 }
 
 export default function SettingsPage() {
   const [fontFamily, setFontFamily] = useState("TikTokSans-Regular");
   const [fontSize, setFontSize] = useState(24);
   const [fontColor, setFontColor] = useState("#FFFFFF");
-  const [completionEmails, setCompletionEmails] = useState(true);
   const [availableFonts, setAvailableFonts] = useState<Array<{ name: string, display_name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -91,7 +87,6 @@ export default function SettingsPage() {
           setFontFamily(data.fontFamily);
           setFontSize(data.fontSize);
           setFontColor(data.fontColor);
-          setCompletionEmails(data.notifyOnCompletion ?? true);
         }
       } catch (error) {
         console.error('Failed to load preferences:', error);
@@ -118,7 +113,6 @@ export default function SettingsPage() {
           fontFamily,
           fontSize,
           fontColor,
-          notifyOnCompletion: completionEmails,
         }),
       });
 
@@ -127,7 +121,6 @@ export default function SettingsPage() {
         throw new Error(errorData.error || "Impossible d'enregistrer les préférences");
       }
 
-      track("preferences_saved");
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
@@ -344,32 +337,6 @@ export default function SettingsPage() {
                     Vos sous-titres ressembleront à ceci
                   </p>
                 </div>
-              </div>
-            </div>
-
-            {/* Notifications Section */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-black mb-1">
-                  Notifications
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Gérez la façon dont vous recevez les mises à jour de vos clips
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="completion-emails" className="flex items-center gap-2 text-sm font-medium text-black cursor-pointer">
-                  <Mail className="w-4 h-4" />
-                  Emails de fin de traitement
-                  <span className="text-gray-500 font-normal">- recevez une notification quand vos clips sont prêts</span>
-                </Label>
-                <Switch
-                  id="completion-emails"
-                  checked={completionEmails}
-                  onCheckedChange={setCompletionEmails}
-                  disabled={isLoading}
-                />
               </div>
             </div>
 

@@ -165,10 +165,8 @@ def create_app(
     app.include_router(admin_router)
 
     from .api.routes.media import router as media_router
-    from .api.routes.feedback import router as feedback_router
 
     app.include_router(media_router)
-    app.include_router(feedback_router)
 
     @app.get("/")
     def read_root():

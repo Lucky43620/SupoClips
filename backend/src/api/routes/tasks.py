@@ -15,7 +15,7 @@ import re
 from ...database import get_db
 from ...database import AsyncSessionLocal
 from ...services.task_service import TaskService
-from ...auth_headers import get_signed_user_id, USER_ID_HEADER
+from ...auth_headers import USER_ID_HEADER
 from ...workers.job_queue import JobQueue
 from ...workers.progress import ProgressTracker
 from ...config import get_config
@@ -48,10 +48,7 @@ def _normalize_font_family(value: Any, default: str = "TikTokSans-Regular") -> s
 
 
 def _get_user_id_from_headers(request: Request) -> str:
-    """Get user ID from signed hosted headers or local self-host headers."""
-    config = get_config()
-    if config.monetization_enabled:
-        return get_signed_user_id(request, config)
+    """Get user ID from the local frontend proxy header."""
     user_id = request.headers.get("user_id") or request.headers.get(USER_ID_HEADER)
     if not user_id:
         raise HTTPException(status_code=401, detail="User authentication required")
@@ -104,10 +101,7 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
 
     raw_source = data.get("source")
     config = get_config()
-    if config.monetization_enabled:
-        user_id = get_signed_user_id(request, config)
-    else:
-        user_id = request.headers.get("user_id") or request.headers.get(USER_ID_HEADER)
+    user_id = request.headers.get("user_id") or request.headers.get(USER_ID_HEADER)
     if not user_id:
         raise HTTPException(status_code=401, detail="User authentication required")
 

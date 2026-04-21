@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signUp } from "../../lib/auth-client";
-import { track } from "@/lib/datafast";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -36,9 +35,6 @@ export function SignUp() {
       return;
     }
 
-    track("signup_completed", {
-      auth_method: "email",
-    });
     setMessage("Compte créé avec succès ! Connexion en cours...");
     setLoading(false);
 

@@ -84,34 +84,59 @@ class VideoProcessor:
 
 def get_video_transcript(video_path: Path, speech_model: str = "best") -> str:
     """Get transcript using AssemblyAI with word-level timing for precise subtitles."""
+    import requests
+    import time as _time
+
     logger.info(f"Getting transcript for: {video_path}")
 
-    # Configure AssemblyAI
-    aai.settings.api_key = config.assembly_ai_api_key
-    transcriber = aai.Transcriber()
-
-    config_obj = aai.TranscriptionConfig(
-        punctuate=True,
-        format_text=True,
-    )
+    api_key = config.assembly_ai_api_key
+    headers = {"authorization": api_key}
+    speech_model_name = "universal-2" if speech_model == "nano" else "universal-3-pro"
 
     try:
         logger.info("Starting AssemblyAI transcription")
-        transcript = transcriber.transcribe(str(video_path), config=config_obj)
 
-        if transcript.status == aai.TranscriptStatus.error:
-            logger.error(f"AssemblyAI transcription failed: {transcript.error}")
-            raise Exception(f"Transcription failed: {transcript.error}")
+        # Upload file directly to bypass SDK speech_model deprecation
+        with open(video_path, "rb") as f:
+            upload_resp = requests.post(
+                "https://api.assemblyai.com/v2/upload",
+                headers=headers,
+                data=f,
+                timeout=300,
+            )
+        upload_resp.raise_for_status()
+        upload_url = upload_resp.json()["upload_url"]
+
+        # Submit with new speech_models field
+        transcript_resp = requests.post(
+            "https://api.assemblyai.com/v2/transcript",
+            headers=headers,
+            json={
+                "audio_url": upload_url,
+                "punctuate": True,
+                "format_text": True,
+                "speech_models": [speech_model_name],
+            },
+            timeout=30,
+        )
+        transcript_resp.raise_for_status()
+        transcript_id = transcript_resp.json()["id"]
+
+        # Poll for completion using SDK (avoids re-sending speech_model)
+        aai.settings.api_key = api_key
+        while True:
+            transcript = aai.Transcript.get_by_id(transcript_id)
+            if transcript.status == aai.TranscriptStatus.completed:
+                break
+            if transcript.status == aai.TranscriptStatus.error:
+                raise Exception(f"Transcription failed: {transcript.error}")
+            _time.sleep(3)
 
         formatted_lines = format_transcript_for_analysis(transcript)
-
-        # Cache the raw transcript for subtitle generation
         cache_transcript_data(video_path, transcript)
 
         result = "\n".join(formatted_lines)
-        logger.info(
-            f"Transcript formatted: {len(formatted_lines)} segments, {len(result)} chars"
-        )
+        logger.info(f"Transcript formatted: {len(formatted_lines)} segments, {len(result)} chars")
         return result
 
     except Exception as e:
@@ -274,7 +299,7 @@ def get_safe_vertical_position(
 ) -> int:
     """Return subtitle y position clamped inside a top/bottom safe area."""
     min_top_padding = max(40, int(video_height * 0.05))
-    min_bottom_padding = max(120, int(video_height * 0.10))
+    min_bottom_padding = max(200, int(video_height * 0.18))
 
     desired_y = int(video_height * position_y - text_height // 2)
     max_y = video_height - min_bottom_padding - text_height

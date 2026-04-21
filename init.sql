@@ -20,16 +20,7 @@ CREATE TABLE users (
     default_font_family VARCHAR(100) DEFAULT 'TikTokSans-Regular',
     default_font_size INTEGER DEFAULT 24,
     default_font_color VARCHAR(7) DEFAULT '#FFFFFF',
-    notify_on_completion BOOLEAN NOT NULL DEFAULT true,
-    -- Monetization and billing fields
-    is_admin BOOLEAN NOT NULL DEFAULT false,
-    plan VARCHAR(20) NOT NULL DEFAULT 'free',
-    subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive',
-    stripe_customer_id VARCHAR(255) UNIQUE,
-    stripe_subscription_id VARCHAR(255) UNIQUE,
-    billing_period_start TIMESTAMP WITH TIME ZONE,
-    billing_period_end TIMESTAMP WITH TIME ZONE,
-    trial_ends_at TIMESTAMP WITH TIME ZONE
+    is_admin BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Source table (created before tasks since tasks reference sources)
@@ -68,7 +59,6 @@ CREATE TABLE tasks (
     cache_hit BOOLEAN NOT NULL DEFAULT false,
     error_code VARCHAR(80),
     stage_timings_json TEXT,
-    completion_notification_sent_at TIMESTAMP WITH TIME ZONE,
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -146,13 +136,6 @@ CREATE TABLE verification (
     "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
     "createdAt" TIMESTAMP WITH TIME ZONE,
     "updatedAt" TIMESTAMP WITH TIME ZONE
-);
-
--- Stripe webhook idempotency table
-CREATE TABLE stripe_webhook_events (
-    id VARCHAR(255) PRIMARY KEY,
-    type VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for better performance

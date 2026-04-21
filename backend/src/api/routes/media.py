@@ -11,7 +11,7 @@ import uuid
 import aiofiles
 
 from ...config import Config
-from ...auth_headers import get_signed_user_id, USER_ID_HEADER
+from ...auth_headers import USER_ID_HEADER
 from ...font_registry import (
     FONTS_DIR,
     SUPPORTED_FONT_EXTENSIONS,
@@ -27,11 +27,7 @@ router = APIRouter(tags=["media"])
 
 
 def _get_authenticated_user_id(request: Request) -> str:
-    config = Config()
-    if config.monetization_enabled:
-        return get_signed_user_id(request, config)
-
-    # Self-hosted: accept user_id or x-supoclip-user-id (frontend uses buildBackendAuthHeaders)
+    # Local frontend proxy sends the authenticated Better Auth user id.
     user_id = request.headers.get("user_id") or request.headers.get(USER_ID_HEADER)
     if not user_id:
         raise HTTPException(status_code=401, detail="User authentication required")

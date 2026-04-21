@@ -28,9 +28,8 @@ from sqlalchemy import text
 
 from .models import User, Task, Source, GeneratedClip
 from .database import init_db, close_db, get_db, AsyncSessionLocal
-from .auth_headers import get_signed_user_id, USER_ID_HEADER
+from .auth_headers import USER_ID_HEADER
 from .api.routes.tasks import router as tasks_router
-from .api.routes.feedback import router as feedback_router
 from .services.video_service import VideoService, UPLOAD_URL_PREFIX
 
 config = Config()
@@ -69,7 +68,6 @@ app.add_middleware(
 
 # Include API routers
 app.include_router(tasks_router)
-app.include_router(feedback_router)
 
 # Mount static files for serving clips
 clips_dir = Path(config.temp_dir) / "clips"
@@ -78,9 +76,6 @@ app.mount("/clips", StaticFiles(directory=str(clips_dir)), name="clips")
 
 
 def _get_authenticated_user_id(request: Request) -> str:
-    if config.monetization_enabled:
-        return get_signed_user_id(request, config)
-
     user_id = request.headers.get("user_id") or request.headers.get(USER_ID_HEADER)
     if not user_id:
         raise HTTPException(status_code=401, detail="User authentication required")
@@ -111,9 +106,6 @@ async def check_database_health(db: AsyncSession = Depends(get_db)):
 @app.post("/start")
 async def start_task(request: Request):
     """Start a new task for authenticated users"""
-    if config.monetization_enabled:
-        raise HTTPException(status_code=404, detail="Not found")
-
     logger.info("🚀 Starting new task request")
 
     data = await request.json()
@@ -357,9 +349,6 @@ async def start_task(request: Request):
 @app.post("/start-with-progress")
 async def start_task_with_progress(request: Request):
     """Start a new task and return task ID for SSE tracking"""
-    if config.monetization_enabled:
-        raise HTTPException(status_code=404, detail="Not found")
-
     data = await request.json()
     raw_source = data.get("source")
     user_id = _get_authenticated_user_id(request)

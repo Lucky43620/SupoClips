@@ -18,10 +18,6 @@ from ..repositories.source_repository import SourceRepository
 from ..repositories.clip_repository import ClipRepository
 from ..repositories.cache_repository import CacheRepository
 from .video_service import VideoService
-from .task_completion_email_service import (
-    TaskCompletionEmailService,
-    TaskCompletionRecipient,
-)
 from ..config import Config, get_config
 from ..clip_editor import (
     trim_clip_file,
@@ -315,11 +311,6 @@ class TaskService:
                 stage_timings_json=json.dumps(stage_timings),
                 error_code="",
             )
-            await self._send_completion_notification_if_needed(
-                task_id=task_id,
-                clips_count=len(clip_ids),
-            )
-
             logger.info(
                 f"Task {task_id} completed successfully with {len(clip_ids)} clips"
             )
@@ -364,64 +355,6 @@ class TaskService:
                 error_code=error_code,
             )
             raise
-
-    async def _send_completion_notification_if_needed(
-        self, *, task_id: str, clips_count: int
-    ) -> None:
-        context = await self.task_repo.get_task_notification_context(self.db, task_id)
-        if not context:
-            logger.warning("Task %s missing notification context; skipping email", task_id)
-            return
-
-        if not context.get("notify_on_completion"):
-            return
-
-        if context.get("completion_notification_sent_at"):
-            logger.info(
-                "Completion notification already sent for task %s; skipping", task_id
-            )
-            return
-
-        user_email = context.get("user_email")
-        if not user_email:
-            logger.warning(
-                "Task %s has notify_on_completion enabled but user email is missing",
-                task_id,
-            )
-            return
-
-        email_service = TaskCompletionEmailService(self.config)
-        if not email_service.is_configured:
-            logger.warning(
-                "Skipping completion notification for task %s because Resend is not configured",
-                task_id,
-            )
-            return
-
-        try:
-            await email_service.send_task_completed_email(
-                recipient=TaskCompletionRecipient(
-                    email=user_email,
-                    name=context.get("user_name"),
-                    first_name=context.get("user_first_name"),
-                ),
-                task_id=task_id,
-                source_title=context.get("source_title"),
-                clips_count=clips_count,
-            )
-            stamped = await self.task_repo.mark_completion_notification_sent(
-                self.db, task_id
-            )
-            if not stamped:
-                logger.info(
-                    "Completion notification stamp already existed for task %s",
-                    task_id,
-                )
-        except Exception:
-            logger.exception(
-                "Failed to send completion notification for task %s",
-                task_id,
-            )
 
     async def get_task_with_clips(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Get task details with all clips."""
