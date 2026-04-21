@@ -28,12 +28,6 @@ function statusLabel(status: string) {
   return labels[status] || status;
 }
 
-function planLabel(plan: string | null) {
-  if (plan === "pro") return "Pro";
-  if (plan === "free") return "Gratuit";
-  return plan || "Gratuit";
-}
-
 export default async function AdminPage({
   searchParams,
 }: {
@@ -92,7 +86,6 @@ export default async function AdminPage({
         email: true,
         name: true,
         is_admin: true,
-        plan: true,
         createdAt: true,
       },
     }),
@@ -305,7 +298,6 @@ export default async function AdminPage({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Utilisateur</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Offre</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Rôle</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Générations</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Créé</th>
@@ -321,11 +313,6 @@ export default async function AdminPage({
                     <Link href={`/admin?user=${user.id}`} className="text-xs text-black underline">
                       Voir les tâches
                     </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className="capitalize">
-                      {planLabel(user.plan)}
-                    </Badge>
                   </td>
                   <td className="px-4 py-3">
                     {user.is_admin ? (

@@ -23,15 +23,6 @@ interface UserPreferences {
   notifyOnCompletion: boolean;
 }
 
-interface BillingSummary {
-  monetization_enabled: boolean;
-  plan: string;
-  subscription_status: string;
-  usage_count: number;
-  usage_limit: number | null;
-  remaining: number | null;
-}
-
 export default function SettingsPage() {
   const [fontFamily, setFontFamily] = useState("TikTokSans-Regular");
   const [fontSize, setFontSize] = useState(24);
@@ -42,12 +33,8 @@ export default function SettingsPage() {
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null);
-  const [isBillingActionLoading, setIsBillingActionLoading] = useState(false);
   const { data: session, isPending } = useSession();
   const isAdmin = Boolean((session?.user as { is_admin?: boolean } | undefined)?.is_admin);
-
-  const proPriceMonthly = process.env.NEXT_PUBLIC_PRO_PRICE_MONTHLY || "9.99";
 
   // Load available fonts from backend and inject them into the page
   useEffect(() => {
@@ -115,54 +102,6 @@ export default function SettingsPage() {
 
     loadPreferences();
   }, [session?.user?.id]);
-
-  useEffect(() => {
-    const fetchBillingSummary = async () => {
-      if (!session?.user?.id) return;
-
-      try {
-        const response = await fetch("/api/tasks/billing-summary", {
-          cache: "no-store",
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data: BillingSummary = await response.json();
-        setBillingSummary(data);
-      } catch (fetchError) {
-        console.error("Failed to fetch billing summary:", fetchError);
-      }
-    };
-
-    fetchBillingSummary();
-  }, [session?.user?.id]);
-
-  const handleBillingAction = async () => {
-    if (!billingSummary?.monetization_enabled) return;
-
-    const route = billingSummary.plan === "pro" ? "/api/billing/portal" : "/api/billing/checkout";
-
-    try {
-      setIsBillingActionLoading(true);
-      const response = await fetch(route, { method: "POST" });
-      const data = await response.json();
-
-      if (!response.ok || !data.url) {
-        throw new Error(data.error || "Impossible d'ouvrir la facturation");
-      }
-
-      track(billingSummary.plan === "pro" ? "billing_portal_opened" : "billing_checkout_started", {
-        plan: billingSummary.plan,
-      });
-      window.location.href = data.url;
-    } catch (billingError) {
-      setError(billingError instanceof Error ? billingError.message : "Action de facturation impossible");
-    } finally {
-      setIsBillingActionLoading(false);
-    }
-  };
 
   const handleSavePreferences = async () => {
     setIsLoading(true);
@@ -453,40 +392,6 @@ export default function SettingsPage() {
                   {error}
                 </AlertDescription>
               </Alert>
-            )}
-
-            {/* Save Button */}
-            {billingSummary?.monetization_enabled && (
-              <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-black">Facturation</h3>
-                  {billingSummary.plan !== "pro" && (
-                    <p className="text-sm text-gray-600">Offre Pro : ${proPriceMonthly}/mois</p>
-                  )}
-                  <p className="text-sm text-gray-600">
-                    {billingSummary.usage_limit === null
-                      ? `${billingSummary.usage_count} génération${billingSummary.usage_count === 1 ? "" : "s"} sur cette période de facturation`
-                      : `${billingSummary.usage_count}/${billingSummary.usage_limit} génération${billingSummary.usage_count === 1 ? "" : "s"} utilisée${billingSummary.usage_count === 1 ? "" : "s"} sur cette période`}
-                  </p>
-                  <p className="text-sm text-gray-500 capitalize">
-                    Offre : {billingSummary.plan} ({billingSummary.subscription_status})
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  variant={billingSummary.plan === "pro" ? "outline" : "default"}
-                  onClick={handleBillingAction}
-                  disabled={isBillingActionLoading}
-                  className="w-full"
-                >
-                  {isBillingActionLoading
-                    ? "Chargement..."
-                    : billingSummary.plan === "pro"
-                      ? "Gérer la facturation"
-                      : `Passer à Pro ($${proPriceMonthly}/mois)`}
-                </Button>
-              </div>
             )}
 
             <Button

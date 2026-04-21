@@ -90,16 +90,9 @@ def get_video_transcript(video_path: Path, speech_model: str = "best") -> str:
     aai.settings.api_key = config.assembly_ai_api_key
     transcriber = aai.Transcriber()
 
-    # Request word-level timestamps for precise subtitle sync
-    speech_model_value = aai.SpeechModel.best
-    if speech_model == "nano":
-        speech_model_value = aai.SpeechModel.nano
-
     config_obj = aai.TranscriptionConfig(
-        speaker_labels=True,
         punctuate=True,
         format_text=True,
-        speech_models=speech_model_value,
     )
 
     try:

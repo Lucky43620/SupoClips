@@ -57,9 +57,9 @@ Notes:
 
 ## Email Configuration
 
-The backend now sends subscription lifecycle emails through Resend.
+The backend can send task completion emails through Resend.
 
-Set these env vars when using hosted billing:
+Set these env vars when you want completion notifications:
 
 ```
 RESEND_API_KEY=your_resend_api_key
@@ -69,8 +69,7 @@ RESEND_FROM_EMAIL="SupoClip <onboarding@your-domain.com>"
 Notes:
 
 - `RESEND_FROM_EMAIL` must be a verified sender/domain in Resend.
-- The thank-you email is triggered after a successful Stripe checkout.
-- The cancellation email is triggered after Stripe subscription deletion.
+- Completion emails are triggered after a task finishes, when the user preference is enabled.
 
 ## YouTube Metadata Provider
 

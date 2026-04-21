@@ -16,7 +16,6 @@ export default defineConfig({
       include: [
         "src/app/api/preferences/route.ts",
         "src/app/api/tasks/route.ts",
-        "src/app/api/billing/webhook/route.ts",
         "src/components/auth/sign-in.tsx",
         "src/components/auth/sign-up.tsx",
       ],

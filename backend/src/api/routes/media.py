@@ -11,9 +11,7 @@ import uuid
 import aiofiles
 
 from ...config import Config
-from ...database import get_db
 from ...auth_headers import get_signed_user_id, USER_ID_HEADER
-from ...services.billing_service import BillingService
 from ...font_registry import (
     FONTS_DIR,
     SUPPORTED_FONT_EXTENSIONS,
@@ -23,8 +21,6 @@ from ...font_registry import (
     get_user_fonts_dir,
     sanitize_font_stem,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["media"])
@@ -90,22 +86,10 @@ async def get_font_file(font_name: str, request: Request):
 async def upload_font(
     request: Request,
     uploaded_file: UploadFile = File(..., alias="file"),
-    db: AsyncSession = Depends(get_db),
 ):
     """Upload a custom .ttf/.otf font so it appears in the font picker."""
     try:
         user_id = _get_authenticated_user_id(request)
-        billing_service = BillingService(db)
-        summary = await billing_service.get_usage_summary(user_id)
-        pro_access = not summary.get("monetization_enabled") or (
-            summary.get("plan") == "pro"
-            and summary.get("subscription_status") in {"active", "trialing"}
-        )
-        if not pro_access:
-            raise HTTPException(
-                status_code=403,
-                detail="Custom font uploads are available for Pro users only",
-            )
 
         if not uploaded_file.filename:
             raise HTTPException(status_code=400, detail="Missing file name")

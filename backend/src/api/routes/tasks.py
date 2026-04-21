@@ -15,7 +15,6 @@ import re
 from ...database import get_db
 from ...database import AsyncSessionLocal
 from ...services.task_service import TaskService
-from ...services.billing_service import BillingService, BillingLimitExceeded
 from ...auth_headers import get_signed_user_id, USER_ID_HEADER
 from ...workers.job_queue import JobQueue
 from ...workers.progress import ProgressTracker
@@ -49,7 +48,7 @@ def _normalize_font_family(value: Any, default: str = "TikTokSans-Regular") -> s
 
 
 def _get_user_id_from_headers(request: Request) -> str:
-    """Get user ID. Monetization on: signed auth (same as create_task/billing_summary). Off: user_id or x-supoclip-user-id."""
+    """Get user ID from signed hosted headers or local self-host headers."""
     config = get_config()
     if config.monetization_enabled:
         return get_signed_user_id(request, config)
@@ -134,9 +133,6 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Source URL is required")
 
     try:
-        billing_service = BillingService(db)
-        await billing_service.assert_can_create_task(user_id)
-
         task_service = TaskService(db)
 
         # Create task
@@ -203,43 +199,9 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except BillingLimitExceeded as e:
-        raise HTTPException(
-            status_code=402,
-            detail={
-                "code": "SUBSCRIPTION_REQUIRED",
-                "message": "Active subscription required to create tasks.",
-                "billing": e.summary,
-            },
-        )
     except Exception as e:
         logger.error(f"Error creating task: {e}")
         raise HTTPException(status_code=500, detail=f"Error creating task: {str(e)}")
-
-
-@router.get("/billing/summary")
-async def get_billing_summary(request: Request, db: AsyncSession = Depends(get_db)):
-    """Get monetization status and current usage for authenticated user."""
-    config = get_config()
-    if config.monetization_enabled:
-        user_id = get_signed_user_id(request, config)
-    else:
-        user_id = request.headers.get("user_id") or request.headers.get(USER_ID_HEADER)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User authentication required")
-
-    try:
-        billing_service = BillingService(db)
-        summary = await billing_service.get_usage_summary(user_id)
-        return summary
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error retrieving billing summary: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving billing summary: {str(e)}",
-        )
 
 
 @router.get("/{task_id}")

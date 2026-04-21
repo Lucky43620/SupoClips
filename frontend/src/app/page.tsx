@@ -19,8 +19,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Youtube, CheckCircle, AlertCircle, Loader2, Palette, Type, Paintbrush, Film, Sparkles, Upload, Monitor, Menu, X, LogOut, List, Shield, Settings } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import LandingPage from "@/components/landing-page";
-import { isLandingOnlyModeEnabled } from "@/lib/app-flags";
 
 interface LatestTask {
   id: string;
@@ -29,18 +27,6 @@ interface LatestTask {
   status: string;
   clips_count: number;
   created_at: string;
-}
-
-interface BillingSummary {
-  monetization_enabled: boolean;
-  plan: string;
-  subscription_status: string;
-  usage_count: number;
-  usage_limit: number | null;
-  remaining: number | null;
-  can_create_task: boolean;
-  upgrade_required: boolean;
-  reason: string | null;
 }
 
 interface FontOption {
@@ -122,7 +108,6 @@ export default function Home() {
   // Latest task state
   const [latestTask, setLatestTask] = useState<LatestTask | null>(null);
   const [isLoadingLatest, setIsLoadingLatest] = useState(false);
-  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const taskApiUrl = "/api/tasks";
@@ -252,29 +237,6 @@ export default function Home() {
     fetchLatestTask();
   }, [session?.user?.id, taskApiUrl]);
 
-  useEffect(() => {
-    const fetchBillingSummary = async () => {
-      if (!session?.user?.id) return;
-
-      try {
-        const response = await fetch("/api/tasks/billing-summary", {
-          cache: "no-store",
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data: BillingSummary = await response.json();
-        setBillingSummary(data);
-      } catch (error) {
-        console.error("Failed to load billing summary:", error);
-      }
-    };
-
-    fetchBillingSummary();
-  }, [session?.user?.id, apiUrl]);
-
   // Always treat file input as uncontrolled, and store file in a ref
   const fileRef = useRef<File | null>(null);
 
@@ -355,10 +317,6 @@ export default function Home() {
     return font.display_name.toLowerCase().includes(keyword) || font.name.toLowerCase().includes(keyword);
   });
 
-  const canUploadCustomFonts =
-    !billingSummary?.monetization_enabled ||
-    (billingSummary.plan === "pro" && ["active", "trialing"].includes(billingSummary.subscription_status));
-
   const handleSignOut = async () => {
     await signOut();
     window.location.href = "/sign-in";
@@ -387,11 +345,6 @@ export default function Home() {
     if (sourceType === "upload" && !fileRef.current) return;
     if (sourceType === "youtube" && !url.trim()) return;
     if (!session?.user?.id) return;
-    if (billingSummary?.monetization_enabled && !billingSummary.can_create_task) {
-      setError(billingSummary.reason || "Un abonnement actif est requis pour continuer.");
-      return;
-    }
-
     setIsLoading(true);
     setProgress(0);
     setError(null);
@@ -504,8 +457,32 @@ export default function Home() {
     );
   }
 
-  if (isLandingOnlyModeEnabled || !session?.user) {
-    return <LandingPage />;
+  if (!session?.user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="max-w-sm w-full text-center space-y-6">
+          <div className="flex items-center justify-center gap-3">
+            <Image
+              src="/logo.png"
+              alt="SupoClip"
+              width={28}
+              height={28}
+              className="rounded-lg"
+            />
+            <h1 className="text-2xl font-bold text-black">SupoClip</h1>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-black">Connexion requise</h2>
+            <p className="text-sm text-gray-600">
+              Connectez-vous pour retrouver vos profils et creer des clips.
+            </p>
+          </div>
+          <Link href="/sign-in">
+            <Button className="w-full h-11">Se connecter</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -527,41 +504,6 @@ export default function Home() {
 
             {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-2">
-              {billingSummary?.monetization_enabled && (
-                <div className="flex items-center gap-2 mr-1">
-                  <Badge
-                    className={`text-[10px] px-1.5 py-0 h-5 ${
-                      billingSummary.plan === "pro"
-                        ? "bg-stone-900 text-white"
-                        : "bg-stone-100 text-stone-600 border border-stone-200"
-                    }`}
-                  >
-                    {billingSummary.plan === "pro" ? "Pro" : "Gratuit"}
-                  </Badge>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-16 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          billingSummary.usage_limit &&
-                          billingSummary.usage_count / billingSummary.usage_limit > 0.8
-                            ? "bg-red-500"
-                            : "bg-stone-900"
-                        }`}
-                        style={{
-                          width: billingSummary.usage_limit
-                            ? `${Math.min((billingSummary.usage_count / billingSummary.usage_limit) * 100, 100)}%`
-                            : "0%",
-                        }}
-                      />
-                    </div>
-                    <span className="text-[11px] text-stone-500 tabular-nums whitespace-nowrap">
-                      {billingSummary.usage_limit
-                        ? `${billingSummary.usage_count}/${billingSummary.usage_limit}`
-                        : `${billingSummary.usage_count}`}
-                    </span>
-                  </div>
-                </div>
-              )}
               <Link href="/list">
                 <Button variant="outline" size="sm">
                   Toutes les générations
@@ -593,17 +535,6 @@ export default function Home() {
 
             {/* Mobile hamburger */}
             <div className="flex items-center gap-2 md:hidden">
-              {billingSummary?.monetization_enabled && (
-                <Badge
-                  className={`text-[10px] px-1.5 py-0 h-5 ${
-                    billingSummary.plan === "pro"
-                      ? "bg-stone-900 text-white"
-                      : "bg-stone-100 text-stone-600 border border-stone-200"
-                  }`}
-                >
-                    {billingSummary.plan === "pro" ? "Pro" : "Gratuit"}
-                </Badge>
-              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -640,32 +571,6 @@ export default function Home() {
               </Link>
 
               <Separator />
-
-              {/* Usage bar (mobile) */}
-              {billingSummary?.monetization_enabled && (
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        billingSummary.usage_limit &&
-                        billingSummary.usage_count / billingSummary.usage_limit > 0.8
-                          ? "bg-red-500"
-                          : "bg-stone-900"
-                      }`}
-                      style={{
-                        width: billingSummary.usage_limit
-                          ? `${Math.min((billingSummary.usage_count / billingSummary.usage_limit) * 100, 100)}%`
-                          : "0%",
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs text-stone-500 tabular-nums whitespace-nowrap">
-                    {billingSummary.usage_limit
-                      ? `${billingSummary.usage_count}/${billingSummary.usage_limit}`
-                      : `${billingSummary.usage_count}`}
-                  </span>
-                </div>
-              )}
 
               {/* Nav links */}
               <Link
@@ -988,15 +893,12 @@ export default function Home() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            disabled={isLoading || isUploadingFont || !canUploadCustomFonts}
+                            disabled={isLoading || isUploadingFont}
                             onClick={() => fontUploadInputRef.current?.click()}
                           >
                             {isUploadingFont ? "Import..." : "Importer une police"}
                           </Button>
                         </div>
-                        {!canUploadCustomFonts && (
-                          <p className="text-xs text-amber-700">L'import de polices personnalisées est disponible avec l'offre Pro.</p>
-                        )}
                         <Input
                           type="text"
                           value={fontSearch}
@@ -1175,7 +1077,6 @@ export default function Home() {
                 disabled={
                   (sourceType === "youtube" && !url.trim()) ||
                   (sourceType === "upload" && !fileRef.current) ||
-                  (billingSummary?.monetization_enabled && !billingSummary.can_create_task) ||
                   isLoading
                 }
               >
