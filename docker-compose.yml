@@ -1,0 +1,229 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: ${FRONTEND_BUILD_TARGET:-development}
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        - NEXT_PUBLIC_SELF_HOST=${SELF_HOST:-true}
+        - NEXT_PUBLIC_PRO_PRICE_MONTHLY=${NEXT_PUBLIC_PRO_PRICE_MONTHLY:-9.99}
+        - NEXT_PUBLIC_FREE_PLAN_TASK_LIMIT=${NEXT_PUBLIC_FREE_PLAN_TASK_LIMIT:-10}
+        - NEXT_PUBLIC_PRO_PLAN_TASK_LIMIT=${NEXT_PUBLIC_PRO_PLAN_TASK_LIMIT:-200}
+    container_name: supoclip-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/prisma:/app/prisma
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - BACKEND_INTERNAL_URL=http://backend:8000
+      - NEXT_PUBLIC_SELF_HOST=${SELF_HOST:-true}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_LANDING_ONLY_MODE=${NEXT_PUBLIC_LANDING_ONLY_MODE:-false}
+      - BACKEND_AUTH_SECRET=${BACKEND_AUTH_SECRET}
+      - DATABASE_URL=postgresql://supoclip:supoclip_password@postgres:5432/supoclip
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-supoclip_dev_secret_change_in_production}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PRICE_ID=${STRIPE_PRICE_ID}
+      - NEXT_PUBLIC_PRO_PRICE_MONTHLY=${NEXT_PUBLIC_PRO_PRICE_MONTHLY:-9.99}
+      - NEXT_PUBLIC_FREE_PLAN_TASK_LIMIT=${NEXT_PUBLIC_FREE_PLAN_TASK_LIMIT:-10}
+      - NEXT_PUBLIC_PRO_PLAN_TASK_LIMIT=${NEXT_PUBLIC_PRO_PLAN_TASK_LIMIT:-200}
+      - STRIPE_CHECKOUT_URL=${STRIPE_CHECKOUT_URL}
+      - STRIPE_CUSTOMER_PORTAL_URL=${STRIPE_CUSTOMER_PORTAL_URL}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: supoclip-backend
+    platform: linux/amd64
+    command: [".venv/bin/uvicorn", "src.main_refactored:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/src:/app/src
+      - uploads:/app/uploads
+      - clips:/app/clips
+      - ./backend/fonts:/app/fonts
+      - ./backend/transitions:/app/transitions
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://supoclip:supoclip_password@postgres:5432/supoclip
+      - TEMP_DIR=/app/uploads
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - ASSEMBLY_AI_API_KEY=${ASSEMBLY_AI_API_KEY}
+      - APIFY_API_TOKEN=${APIFY_API_TOKEN}
+      - APIFY_YOUTUBE_DEFAULT_QUALITY=${APIFY_YOUTUBE_DEFAULT_QUALITY:-1080}
+      - YOUTUBE_DATA_API_KEY=${YOUTUBE_DATA_API_KEY}
+      - YOUTUBE_METADATA_PROVIDER=${YOUTUBE_METADATA_PROVIDER:-yt_dlp}
+      - LLM=${LLM:-google-gla:gemini-3-flash-preview}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-medium}
+      - QUEUED_TASK_TIMEOUT_SECONDS=${QUEUED_TASK_TIMEOUT_SECONDS:-180}
+      - DEFAULT_PROCESSING_MODE=${DEFAULT_PROCESSING_MODE:-fast}
+      - FAST_MODE_MAX_CLIPS=${FAST_MODE_MAX_CLIPS:-4}
+      - FAST_MODE_TRANSCRIPT_MODEL=${FAST_MODE_TRANSCRIPT_MODEL:-nano}
+      - SELF_HOST=${SELF_HOST:-true}
+      - BACKEND_AUTH_SECRET=${BACKEND_AUTH_SECRET}
+      - AUTH_SIGNATURE_TTL_SECONDS=${AUTH_SIGNATURE_TTL_SECONDS:-300}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://sp.localhost:3000}
+      - FREE_PLAN_TASK_LIMIT=${FREE_PLAN_TASK_LIMIT:-10}
+      - PRO_PLAN_TASK_LIMIT=${PRO_PLAN_TASK_LIMIT:-0}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - "RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL:-SupoClip <onboarding@resend.dev>}"
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Worker process for background video processing
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: supoclip-worker
+    platform: linux/amd64
+    command: [".venv/bin/arq", "src.workers.tasks.WorkerSettings"]
+    volumes:
+      - ./backend/src:/app/src
+      - uploads:/app/uploads
+      - clips:/app/clips
+      - ./backend/fonts:/app/fonts
+      - ./backend/transitions:/app/transitions
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://supoclip:supoclip_password@postgres:5432/supoclip
+      - TEMP_DIR=/app/uploads
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - ASSEMBLY_AI_API_KEY=${ASSEMBLY_AI_API_KEY}
+      - APIFY_API_TOKEN=${APIFY_API_TOKEN}
+      - APIFY_YOUTUBE_DEFAULT_QUALITY=${APIFY_YOUTUBE_DEFAULT_QUALITY:-1080}
+      - YOUTUBE_DATA_API_KEY=${YOUTUBE_DATA_API_KEY}
+      - YOUTUBE_METADATA_PROVIDER=${YOUTUBE_METADATA_PROVIDER:-yt_dlp}
+      - LLM=${LLM:-google-gla:gemini-3-flash-preview}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-medium}
+      - QUEUED_TASK_TIMEOUT_SECONDS=${QUEUED_TASK_TIMEOUT_SECONDS:-180}
+      - DEFAULT_PROCESSING_MODE=${DEFAULT_PROCESSING_MODE:-fast}
+      - FAST_MODE_MAX_CLIPS=${FAST_MODE_MAX_CLIPS:-4}
+      - FAST_MODE_TRANSCRIPT_MODEL=${FAST_MODE_TRANSCRIPT_MODEL:-nano}
+      - SELF_HOST=${SELF_HOST:-true}
+      - BACKEND_AUTH_SECRET=${BACKEND_AUTH_SECRET}
+      - AUTH_SIGNATURE_TTL_SECONDS=${AUTH_SIGNATURE_TTL_SECONDS:-300}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://sp.localhost:3000}
+      - FREE_PLAN_TASK_LIMIT=${FREE_PLAN_TASK_LIMIT:-10}
+      - PRO_PLAN_TASK_LIMIT=${PRO_PLAN_TASK_LIMIT:-0}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - "RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL:-SupoClip <onboarding@resend.dev>}"
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+  # Redis for caching and job queues (useful for video processing)
+  redis:
+    image: redis:7-alpine
+    container_name: supoclip-redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command:
+      [
+        "sh",
+        "-c",
+        "if [ -n \"$${REDIS_PASSWORD}\" ]; then exec docker-entrypoint.sh redis-server --requirepass \"$${REDIS_PASSWORD}\"; fi; exec docker-entrypoint.sh redis-server",
+      ]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "if [ -n \"$${REDIS_PASSWORD}\" ]; then redis-cli -a \"$${REDIS_PASSWORD}\" ping; else redis-cli ping; fi",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL database for storing video metadata, user data, etc.
+  postgres:
+    image: postgres:15-alpine
+    container_name: supoclip-postgres
+    environment:
+      POSTGRES_DB: supoclip
+      POSTGRES_USER: supoclip
+      POSTGRES_PASSWORD: supoclip_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supoclip -d supoclip"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  uploads:
+    driver: local
+  clips:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: supoclip-network

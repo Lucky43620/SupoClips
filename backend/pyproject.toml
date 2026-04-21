@@ -1,0 +1,57 @@
+[project]
+name = "supoclip-backend"
+version = "0.1.0"
+description = "Python-based backend for SupoClip"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "apify-client>=1.8.1",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "openai-whisper>=20250625",
+    "pydantic-ai>=0.4.9",
+    "setuptools-rust>=1.11.1",
+    "asyncpg>=0.29.0",
+    "sqlalchemy>=2.0.25",
+    "alembic>=1.13.0",
+    "python-dotenv>=1.0.0",
+    "yt-dlp>=2025.7.21",
+    "whisper>=1.1.10",
+    "greenlet>=2.0.0",
+    "moviepy>=2.2.1",
+    "opencv-python>=4.8.0",
+    "srt-equalizer>=0.1.10",
+    "assemblyai>=0.35.0",
+    "srt>=3.5.3",
+    "mediapipe>=0.10.0",
+    "numpy>=1.24.0",
+    "aiofiles>=23.2.0",
+    "sse-starlette>=1.6.5",
+    "arq>=0.26.0",
+    "redis>=5.0.0",
+    "resend>=2.13.0",
+    "requests>=2.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+testpaths = ["tests"]
+addopts = """
+--cov=src.auth_headers
+--cov=src.services.billing_service
+--cov-report=term-missing
+--cov-report=html
+--cov-fail-under=65
+"""
