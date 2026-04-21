@@ -299,7 +299,7 @@ def get_safe_vertical_position(
 ) -> int:
     """Return subtitle y position clamped inside a top/bottom safe area."""
     min_top_padding = max(40, int(video_height * 0.05))
-    min_bottom_padding = max(200, int(video_height * 0.18))
+    min_bottom_padding = max(300, int(video_height * 0.25))
 
     desired_y = int(video_height * position_y - text_height // 2)
     max_y = video_height - min_bottom_padding - text_height
