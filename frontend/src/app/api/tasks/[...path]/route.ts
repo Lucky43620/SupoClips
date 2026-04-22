@@ -20,6 +20,9 @@ async function proxyTaskRequest(
       ? undefined
       : await request.text();
 
+  // Forward Range header for video streaming support
+  const rangeHeader = request.headers.get("range");
+
   const upstream = await fetchBackend(targetPath, {
     method: request.method,
     userId: session.user.id,
@@ -30,10 +33,35 @@ async function proxyTaskRequest(
       ...(request.headers.get("accept")
         ? { Accept: request.headers.get("accept") as string }
         : {}),
+      ...(rangeHeader ? { Range: rangeHeader } : {}),
     },
     body,
     cache: "no-store",
   });
+
+  // For video responses, forward additional headers needed for seeking
+  const contentType = upstream.headers.get("content-type") || "";
+  const isVideo = contentType.startsWith("video/");
+
+  if (isVideo) {
+    const responseHeaders = new Headers();
+    for (const header of [
+      "content-type",
+      "content-length",
+      "content-range",
+      "accept-ranges",
+      "cache-control",
+      "content-disposition",
+      "x-trace-id",
+    ]) {
+      const value = upstream.headers.get(header);
+      if (value) responseHeaders.set(header, value);
+    }
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: responseHeaders,
+    });
+  }
 
   return createProxyResponse(upstream);
 }

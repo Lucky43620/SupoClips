@@ -8,9 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import inspect
 import re
+import os
+from pathlib import Path
 
 from ...database import get_db
 from ...database import AsyncSessionLocal
@@ -113,7 +115,6 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     font_size = _normalize_font_size(font_options.get("font_size", 24))
     font_color = _normalize_font_color(font_options.get("font_color", "#FFFFFF"))
     caption_template = data.get("caption_template", "default")
-    include_broll = data.get("include_broll", False)
     processing_mode = data.get("processing_mode", config.default_processing_mode)
     if processing_mode not in {"fast", "balanced", "quality"}:
         processing_mode = config.default_processing_mode
@@ -123,6 +124,9 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     add_subtitles = data.get("add_subtitles", True)
     if not isinstance(add_subtitles, bool):
         add_subtitles = True
+    llm_model = data.get("llm_model") or config.llm
+    if not isinstance(llm_model, str) or ":" not in llm_model:
+        llm_model = config.llm
     if not raw_source or not raw_source.get("url"):
         raise HTTPException(status_code=400, detail="Source URL is required")
 
@@ -138,7 +142,6 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
             font_size=font_size,
             font_color=font_color,
             caption_template=caption_template,
-            include_broll=include_broll,
             processing_mode=processing_mode,
         )
 
@@ -163,6 +166,7 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
             processing_mode,
             output_format,
             add_subtitles,
+            llm_model,
         )
 
         # Save source metadata for resume/retries in environments without sources.url column
@@ -177,6 +181,7 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
                     "source_type": source_type,
                     "output_format": output_format,
                     "add_subtitles": add_subtitles,
+                    "llm_model": llm_model,
                 }),
                 ex=60 * 60 * 24 * 7,
             )
@@ -363,10 +368,25 @@ async def delete_task(
                 status_code=403, detail="Not authorized to delete this task"
             )
 
-        # Delete clips and task
+        # Get clip file paths before deleting from DB
+        clips = await task_service.clip_repo.get_clips_by_task(db, task_id)
+        file_paths = [c.get("file_path") for c in clips if c.get("file_path")]
+
+        # Delete clips and task from DB
         await task_service.delete_task(task_id)
 
-        return {"message": "Task deleted successfully"}
+        # Delete physical files
+        deleted_files = 0
+        for fp in file_paths:
+            try:
+                p = Path(fp)
+                if p.exists():
+                    p.unlink()
+                    deleted_files += 1
+            except Exception as exc:
+                logger.warning(f"Could not delete file {fp}: {exc}")
+
+        return {"message": "Task deleted successfully", "files_deleted": deleted_files}
 
     except HTTPException:
         raise
@@ -560,7 +580,6 @@ async def apply_task_settings(
         font_size = _normalize_font_size(payload.get("font_size", 24))
         font_color = _normalize_font_color(payload.get("font_color", "#FFFFFF"))
         caption_template = payload.get("caption_template", "default")
-        include_broll = bool(payload.get("include_broll", False))
         apply_to_existing = bool(payload.get("apply_to_existing", False))
 
         task_service = TaskService(db)
@@ -578,7 +597,6 @@ async def apply_task_settings(
             font_size,
             font_color,
             caption_template,
-            include_broll,
             apply_to_existing,
         )
         return {"task": task, "message": "Task settings updated"}
@@ -789,3 +807,214 @@ async def list_dead_letter_tasks():
         return {"total": len(items), "tasks": items}
     finally:
         await redis_client.close()
+
+
+def _find_source_video(source_url: str, source_type: str, temp_dir: Path) -> Optional[Path]:
+    """Try to locate the downloaded source video on disk."""
+    if source_type == "video_url" or (source_url and not source_url.startswith("http")):
+        # Uploaded file
+        if source_url:
+            if source_url.startswith("upload://"):
+                filename = Path(source_url.removeprefix("upload://")).name
+            else:
+                filename = Path(source_url).name
+            candidate = temp_dir / "uploads" / filename
+            if candidate.exists():
+                return candidate
+        return None
+
+    # YouTube: look for {video_id}.* in temp_dir
+    if source_url:
+        try:
+            from ...youtube_utils import get_youtube_video_id
+            video_id = get_youtube_video_id(source_url)
+            if video_id:
+                for ext in (".mp4", ".mkv", ".webm", ".mov", ".m4v"):
+                    candidate = temp_dir / f"{video_id}{ext}"
+                    if candidate.exists():
+                        return candidate
+        except Exception:
+            pass
+    return None
+
+
+def _dir_size(path: Path) -> int:
+    """Return total size in bytes of a directory (non-recursive safe)."""
+    total = 0
+    if not path.exists():
+        return 0
+    for entry in path.rglob("*"):
+        if entry.is_file():
+            try:
+                total += entry.stat().st_size
+            except OSError:
+                pass
+    return total
+
+
+@router.get("/{task_id}/source-video")
+async def serve_source_video(task_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Stream the original downloaded/uploaded video for a task."""
+    user_id = _get_user_id_from_headers(request)
+    cfg = get_config()
+    temp_root = Path(cfg.temp_dir)
+
+    task_service = TaskService(db)
+    task = await task_service.task_repo.get_task_by_id(db, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.get("user_id") != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    source_url = task.get("source_url") or ""
+    source_type = task.get("source_type") or "youtube"
+
+    # Try Redis fallback for source_url
+    if not source_url:
+        try:
+            redis_client = redis.Redis(
+                host=cfg.redis_host, port=cfg.redis_port, password=cfg.redis_password, decode_responses=True
+            )
+            payload = await redis_client.get(f"task_source:{task_id}")
+            await redis_client.close()
+            if payload:
+                parsed = json.loads(payload)
+                source_url = parsed.get("url", "")
+                source_type = parsed.get("source_type", "youtube")
+        except Exception:
+            pass
+
+    video_path = _find_source_video(source_url, source_type, temp_root)
+    if not video_path:
+        raise HTTPException(status_code=404, detail="Source video not found on disk")
+
+    media_type = "video/mp4"
+    if video_path.suffix.lower() == ".mkv":
+        media_type = "video/x-matroska"
+    elif video_path.suffix.lower() == ".webm":
+        media_type = "video/webm"
+
+    return FileResponse(
+        path=str(video_path),
+        media_type=media_type,
+        filename=video_path.name,
+        headers={"Accept-Ranges": "bytes"},
+    )
+
+
+@router.get("/storage/info")
+async def get_storage_info(request: Request, db: AsyncSession = Depends(get_db)):
+    """Return disk usage stats and per-task file sizes for the authenticated user."""
+    user_id = _get_user_id_from_headers(request)
+    cfg = get_config()
+    temp_root = Path(cfg.temp_dir)
+
+    clips_dir = temp_root / "clips"
+    uploads_dir = temp_root / "uploads"
+
+    clips_size = _dir_size(clips_dir)
+    uploads_size = _dir_size(uploads_dir)
+
+    # Disk usage for the whole temp dir
+    try:
+        usage = os.statvfs(str(temp_root)) if hasattr(os, "statvfs") else None
+        if usage:
+            disk_total = usage.f_frsize * usage.f_blocks
+            disk_free = usage.f_frsize * usage.f_bavail
+            disk_used = disk_total - disk_free
+        else:
+            import shutil
+            du = shutil.disk_usage(str(temp_root) if temp_root.exists() else ".")
+            disk_total = du.total
+            disk_free = du.free
+            disk_used = du.used
+    except Exception:
+        disk_total = disk_used = disk_free = 0
+
+    # Per-task file info for the current user
+    task_service = TaskService(db)
+    tasks = await task_service.get_user_tasks(user_id, limit=200)
+
+    tasks_with_files = []
+    for t in tasks:
+        task_id = t["id"]
+        clips = await task_service.clip_repo.get_clips_by_task(db, task_id)
+        task_clips_size = 0
+        clip_files = []
+        for clip in clips:
+            fp = clip.get("file_path")
+            if fp:
+                try:
+                    size = Path(fp).stat().st_size if Path(fp).exists() else 0
+                except OSError:
+                    size = 0
+                task_clips_size += size
+                clip_files.append({
+                    "filename": clip.get("filename"),
+                    "size": size,
+                    "id": clip.get("id"),
+                    "available": Path(fp).exists() if fp else False,
+                })
+
+        # Check source video
+        task_detail = await task_service.task_repo.get_task_by_id(db, task_id)
+        source_url = (task_detail or {}).get("source_url", "") or ""
+        source_type = (task_detail or {}).get("source_type", "youtube") or "youtube"
+        source_video_path = _find_source_video(source_url, source_type, temp_root)
+        source_video_size = 0
+        if source_video_path:
+            try:
+                source_video_size = source_video_path.stat().st_size
+            except OSError:
+                pass
+
+        tasks_with_files.append({
+            **t,
+            "files_size": task_clips_size + source_video_size,
+            "clips_size": task_clips_size,
+            "source_video_size": source_video_size,
+            "source_video_available": source_video_path is not None,
+            "clips": clip_files,
+        })
+
+    return {
+        "disk": {
+            "total": disk_total,
+            "used": disk_used,
+            "free": disk_free,
+        },
+        "breakdown": {
+            "clips": clips_size,
+            "uploads": uploads_size,
+        },
+        "tasks": tasks_with_files,
+    }
+
+
+@router.delete("/storage/cleanup")
+async def cleanup_orphaned_files(request: Request, db: AsyncSession = Depends(get_db)):
+    """Delete clip files on disk that are no longer referenced by any task."""
+    _get_user_id_from_headers(request)
+    cfg = get_config()
+    clips_dir = Path(cfg.temp_dir) / "clips"
+
+    if not clips_dir.exists():
+        return {"deleted_files": 0, "freed_bytes": 0}
+
+    # Collect all known file paths from DB
+    from sqlalchemy import text
+    result = await db.execute(text("SELECT file_path FROM generated_clips WHERE file_path IS NOT NULL"))
+    known_paths = {row[0] for row in result.fetchall()}
+
+    deleted = 0
+    freed = 0
+    for f in clips_dir.iterdir():
+        if f.is_file() and str(f) not in known_paths:
+            try:
+                freed += f.stat().st_size
+                f.unlink()
+                deleted += 1
+            except OSError as exc:
+                logger.warning(f"Could not delete orphan {f}: {exc}")
+
+    return {"deleted_files": deleted, "freed_bytes": freed}

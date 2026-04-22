@@ -55,22 +55,6 @@ Notes:
 - Coverage thresholds are enforced in `pyproject.toml` during the test run.
 - For repo-level entrypoints, use `make test-backend` or `make test-ci` from the repository root.
 
-## Email Configuration
-
-The backend can send task completion emails through Resend.
-
-Set these env vars when you want completion notifications:
-
-```
-RESEND_API_KEY=your_resend_api_key
-RESEND_FROM_EMAIL="SupoClip <onboarding@your-domain.com>"
-```
-
-Notes:
-
-- `RESEND_FROM_EMAIL` must be a verified sender/domain in Resend.
-- Completion emails are triggered after a task finishes, when the user preference is enabled.
-
 ## YouTube Metadata Provider
 
 YouTube downloads still use the existing Apify-first flow with `yt-dlp` fallback. Metadata lookup is now configurable separately.

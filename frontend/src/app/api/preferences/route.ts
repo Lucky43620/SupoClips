@@ -21,6 +21,7 @@ export async function GET(_: NextRequest) {
         default_font_family: true,
         default_font_size: true,
         default_font_color: true,
+        default_llm_model: true,
       },
     });
 
@@ -35,6 +36,7 @@ export async function GET(_: NextRequest) {
       fontFamily: user.default_font_family || "TikTokSans-Regular",
       fontSize: user.default_font_size || 24,
       fontColor: user.default_font_color || "#FFFFFF",
+      llmModel: user.default_llm_model || "anthropic:claude-haiku-4-5-20251001",
     });
   } catch (error) {
     console.error("Error fetching preferences:", error);
@@ -58,14 +60,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fontFamily, fontSize, fontColor } = body;
+    const { fontFamily, fontSize, fontColor, llmModel } = body;
 
-    // Validate inputs
     if (fontFamily && typeof fontFamily !== "string") {
-      return NextResponse.json(
-        { error: "Police invalide" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Police invalide" }, { status: 400 });
     }
 
     if (fontSize && (typeof fontSize !== "number" || fontSize < 12 || fontSize > 48)) {
@@ -82,6 +80,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    if (llmModel && (typeof llmModel !== "string" || !llmModel.includes(":"))) {
+      return NextResponse.json(
+        { error: "Modèle IA invalide" },
+        { status: 400 }
+      );
+    }
+
     const prisma = getPrismaClient();
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
@@ -89,11 +94,13 @@ export async function PATCH(request: NextRequest) {
         ...(fontFamily !== undefined && { default_font_family: fontFamily }),
         ...(fontSize !== undefined && { default_font_size: fontSize }),
         ...(fontColor !== undefined && { default_font_color: fontColor }),
+        ...(llmModel !== undefined && { default_llm_model: llmModel }),
       },
       select: {
         default_font_family: true,
         default_font_size: true,
         default_font_color: true,
+        default_llm_model: true,
       },
     });
 
@@ -101,6 +108,7 @@ export async function PATCH(request: NextRequest) {
       fontFamily: updatedUser.default_font_family,
       fontSize: updatedUser.default_font_size,
       fontColor: updatedUser.default_font_color,
+      llmModel: updatedUser.default_llm_model,
     });
   } catch (error) {
     console.error("Error updating preferences:", error);

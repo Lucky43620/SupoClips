@@ -79,8 +79,6 @@ async def db_session(initialized_database):
 @pytest.fixture()
 async def app(db_session):
     config = Config()
-    config.self_host = True
-    config.monetization_enabled = False
     config.redis_host = os.getenv("REDIS_HOST", "127.0.0.1")
     config.redis_port = int(os.getenv("REDIS_PORT", "6379"))
 

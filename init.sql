@@ -20,7 +20,8 @@ CREATE TABLE users (
     default_font_family VARCHAR(100) DEFAULT 'TikTokSans-Regular',
     default_font_size INTEGER DEFAULT 24,
     default_font_color VARCHAR(7) DEFAULT '#FFFFFF',
-    is_admin BOOLEAN NOT NULL DEFAULT false
+    -- Default AI model preference (format: provider:model)
+    default_llm_model VARCHAR(150) DEFAULT 'anthropic:claude-haiku-4-5-20251001'
 );
 
 -- Source table (created before tasks since tasks reference sources)
@@ -50,9 +51,8 @@ CREATE TABLE tasks (
     font_size INTEGER DEFAULT 24,
     font_color VARCHAR(7) DEFAULT '#FFFFFF', -- Hex color code
 
-    -- Caption template and B-roll options
+    -- Caption template options
     caption_template VARCHAR(50) DEFAULT 'default',
-    include_broll BOOLEAN DEFAULT false,
     processing_mode VARCHAR(20) NOT NULL DEFAULT 'fast',
     started_at TIMESTAMP WITH TIME ZONE,
     completed_at TIMESTAMP WITH TIME ZONE,

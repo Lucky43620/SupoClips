@@ -24,8 +24,8 @@ describe("SignUp", () => {
 
     render(<SignUp />);
 
-    await user.type(screen.getByPlaceholderText("Nom complet"), "Jane Admin");
-    await user.type(screen.getByPlaceholderText("Email"), "admin@example.com");
+    await user.type(screen.getByPlaceholderText("Nom complet"), "Jane User");
+    await user.type(screen.getByPlaceholderText("Email"), "jane@example.com");
     await user.type(screen.getByPlaceholderText("Mot de passe"), "Password123!");
     await user.click(screen.getByRole("button", { name: "Créer un compte" }));
 
@@ -38,8 +38,8 @@ describe("SignUp", () => {
 
     render(<SignUp />);
 
-    await user.type(screen.getByPlaceholderText("Nom complet"), "Jane Admin");
-    await user.type(screen.getByPlaceholderText("Email"), "admin@example.com");
+    await user.type(screen.getByPlaceholderText("Nom complet"), "Jane User");
+    await user.type(screen.getByPlaceholderText("Email"), "jane@example.com");
     await user.type(screen.getByPlaceholderText("Mot de passe"), "Password123!");
     await user.click(screen.getByRole("button", { name: "Créer un compte" }));
 

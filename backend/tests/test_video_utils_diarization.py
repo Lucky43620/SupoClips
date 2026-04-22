@@ -100,10 +100,10 @@ class VideoUtilsDiarizationTests(unittest.TestCase):
         self.assertEqual(payload["utterances"][0]["speaker"], "A")
         self.assertEqual(payload["utterances"][0]["words"][0]["speaker"], "A")
 
-    @patch("src.video_utils.aai.Transcriber")
-    @patch("src.video_utils.aai.TranscriptionConfig")
+    @patch("src.video_utils.aai.Transcript.get_by_id")
+    @patch("requests.post")
     def test_get_video_transcript_enables_speaker_labels(
-        self, mock_transcription_config, mock_transcriber
+        self, mock_post, mock_get_by_id
     ):
         transcript = SimpleNamespace(
             status=video_utils.aai.TranscriptStatus.completed,
@@ -128,7 +128,16 @@ class VideoUtilsDiarizationTests(unittest.TestCase):
                 )
             ],
         )
-        mock_transcriber.return_value.transcribe.return_value = transcript
+        upload_response = SimpleNamespace(
+            raise_for_status=lambda: None,
+            json=lambda: {"upload_url": "https://assembly.test/uploaded.mp4"},
+        )
+        transcript_response = SimpleNamespace(
+            raise_for_status=lambda: None,
+            json=lambda: {"id": "transcript-1"},
+        )
+        mock_post.side_effect = [upload_response, transcript_response]
+        mock_get_by_id.return_value = transcript
 
         with tempfile.TemporaryDirectory() as temp_dir:
             video_path = Path(temp_dir) / "sample.mp4"
@@ -136,8 +145,12 @@ class VideoUtilsDiarizationTests(unittest.TestCase):
             result = video_utils.get_video_transcript(video_path)
 
         self.assertIn("Speaker A: Hello there.", result)
-        mock_transcription_config.assert_called_once()
-        self.assertTrue(mock_transcription_config.call_args.kwargs["speaker_labels"])
+        self.assertEqual(mock_post.call_count, 2)
+        self.assertEqual(
+            mock_post.call_args_list[1].kwargs["json"]["speech_models"],
+            ["universal-3-pro"],
+        )
+        mock_get_by_id.assert_called_once_with("transcript-1")
 
     def test_load_cached_transcript_data_supports_legacy_word_only_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -34,7 +34,6 @@ describe("/api/preferences", () => {
           default_font_family: "Inter",
           default_font_size: 28,
           default_font_color: "#123456",
-          notify_on_completion: false,
         }),
       },
     } as never);
@@ -46,7 +45,6 @@ describe("/api/preferences", () => {
       fontFamily: "Inter",
       fontSize: 28,
       fontColor: "#123456",
-      notifyOnCompletion: false,
     });
   });
 
@@ -65,26 +63,7 @@ describe("/api/preferences", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Couleur de police invalide (format hexadécimal, ex. #FFFFFF)",
-    });
-  });
-
-  it("validates notifyOnCompletion", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: "user-1" },
-    } as never);
-
-    const response = await PATCH(
-      new Request("http://localhost/api/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notifyOnCompletion: "yes" }),
-      }) as never,
-    );
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: "Préférence de notification invalide",
+      error: "Couleur de police invalide (format hexadÃ©cimal, ex. #FFFFFF)",
     });
   });
 
@@ -96,7 +75,6 @@ describe("/api/preferences", () => {
       default_font_family: "TikTokSans-Regular",
       default_font_size: 24,
       default_font_color: "#FFFFFF",
-      notify_on_completion: true,
     });
     vi.mocked(getPrismaClient).mockReturnValue({
       user: { update },
@@ -110,7 +88,6 @@ describe("/api/preferences", () => {
           fontFamily: "TikTokSans-Regular",
           fontSize: 24,
           fontColor: "#FFFFFF",
-          notifyOnCompletion: true,
         }),
       }) as never,
     );
@@ -121,7 +98,6 @@ describe("/api/preferences", () => {
       fontFamily: "TikTokSans-Regular",
       fontSize: 24,
       fontColor: "#FFFFFF",
-      notifyOnCompletion: true,
     });
   });
 });

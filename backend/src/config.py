@@ -18,7 +18,6 @@ class Config:
         self.whisper_model = os.getenv("WHISPER_MODEL", "base")
         self.llm = self._get_optional_env("LLM") or self._infer_default_llm()
         self.assembly_ai_api_key = os.getenv("ASSEMBLY_AI_API_KEY")
-        self.pexels_api_key = os.getenv("PEXELS_API_KEY")
         self.apify_api_token = self._get_optional_env("APIFY_API_TOKEN")
         self.youtube_metadata_provider = self._normalize_youtube_metadata_provider(
             os.getenv("YOUTUBE_METADATA_PROVIDER", "yt_dlp")

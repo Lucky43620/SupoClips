@@ -38,8 +38,6 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://supoclip:supoclip_password@127.0.0.1:5432/supoclip
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      SELF_HOST: "true"
-      BACKEND_AUTH_SECRET: supoclip_test_secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -54,8 +52,6 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SELF_HOST: "true"
-      BACKEND_AUTH_SECRET: supoclip_test_secret
       BETTER_AUTH_SECRET: supoclip_better_auth_test_secret
     steps:
       - uses: actions/checkout@v4
@@ -102,8 +98,6 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://supoclip:supoclip_password@127.0.0.1:5432/supoclip
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
-      NEXT_PUBLIC_SELF_HOST: "true"
-      BACKEND_AUTH_SECRET: supoclip_test_secret
       BETTER_AUTH_SECRET: supoclip_better_auth_test_secret
     steps:
       - uses: actions/checkout@v4

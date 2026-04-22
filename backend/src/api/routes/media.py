@@ -24,6 +24,7 @@ from ...font_registry import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["media"])
+config = Config()
 
 
 def _get_authenticated_user_id(request: Request) -> str:
@@ -191,16 +192,6 @@ async def get_caption_templates():
         return {"templates": templates or default_templates}
     except Exception:
         return {"templates": default_templates}
-
-
-@router.get("/broll/status")
-async def get_broll_status():
-    """Return whether B-roll integrations are configured."""
-    config = Config()
-    return {
-        "configured": bool(config.pexels_api_key),
-        "provider": "pexels" if config.pexels_api_key else None,
-    }
 
 
 @router.post("/upload")

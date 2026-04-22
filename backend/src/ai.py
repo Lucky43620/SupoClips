@@ -3,7 +3,7 @@ AI-related functions for transcript analysis with enhanced precision and viralit
 """
 
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Optional, Literal
 import asyncio
 import logging
 import re
@@ -67,29 +67,15 @@ class TranscriptSegment(BaseModel):
     virality: ViralityAnalysis = Field(description="Detailed virality score breakdown")
 
 
-class BRollOpportunity(BaseModel):
-    """Identifies an opportunity to insert B-roll footage."""
-
-    timestamp: str = Field(description="When to insert B-roll (MM:SS format)")
-    duration: float = Field(
-        description="How long to show B-roll (2-5 seconds)", ge=2.0, le=5.0
-    )
-    search_term: str = Field(description="Keyword to search for B-roll footage")
-    context: str = Field(description="What's being discussed at this point")
-
-
 class TranscriptAnalysis(BaseModel):
-    """Analysis result for transcript segments with virality and B-roll opportunities."""
+    """Analysis result for transcript segments with virality scoring."""
 
     most_relevant_segments: List[TranscriptSegment]
     summary: str = Field(description="Brief summary of the video content")
     key_topics: List[str] = Field(description="List of main topics discussed")
-    broll_opportunities: Optional[List[BRollOpportunity]] = Field(
-        default=None, description="Opportunities to insert B-roll footage"
-    )
 
 
-# Enhanced system prompt with virality scoring and B-roll detection
+# Enhanced system prompt with virality scoring
 transcript_analysis_system_prompt = """You are an expert transcript analyst for short-form video editing.
 
 Your job is extraction and ranking, not creative rewriting. You must stay fully grounded in the transcript and choose the best clip candidates that already exist in the source material.
@@ -160,13 +146,6 @@ HOOK TYPES to identify:
 - "story": Starts with narrative/anecdote
 - "contrast": Before/after or problem/solution framing
 - "none": No clear hook pattern
-
-B-ROLL OPPORTUNITIES:
-Identify 2-4 moments in each segment where B-roll footage could enhance the video:
-- When specific objects, places, or concepts are mentioned
-- During explanations that could benefit from visual illustration
-- At emotional peaks that could use supporting imagery
-- Use simple, searchable keywords (e.g., "coffee shop", "laptop coding", "money stack")
 
 TIMING GUIDELINES:
 - Segments MUST be between 10-45 seconds for optimal engagement
@@ -242,16 +221,8 @@ def get_transcript_agent() -> Agent[None, TranscriptAnalysis]:
     return _transcript_agent
 
 
-def build_transcript_analysis_prompt(
-    transcript: str, include_broll: bool = False
-) -> str:
+def build_transcript_analysis_prompt(transcript: str) -> str:
     """Build the grounded task prompt for transcript analysis."""
-    broll_instruction = ""
-    if include_broll:
-        broll_instruction = (
-            "\n5. Also identify B-roll opportunities for each chosen segment where stock footage could enhance the visual appeal."
-        )
-
     return f"""Analyze this video transcript and identify the most engaging segments for short-form content.
 
 The transcript is formatted as one line per timestamped span, for example:
@@ -262,7 +233,7 @@ Follow this workflow:
 1. Read the transcript as a sequence of timestamped spans.
 2. Select only contiguous ranges that already exist in the transcript.
 3. Prefer moments with a strong hook, clear payoff, emotional charge, or concrete value.
-4. For each chosen segment, use the earliest timestamp in the selected range as start_time and the latest timestamp in the selected range as end_time.{broll_instruction}
+4. For each chosen segment, use the earliest timestamp in the selected range as start_time and the latest timestamp in the selected range as end_time.
 
 Critical accuracy requirements:
 - Do not fabricate or embellish content.
@@ -277,22 +248,31 @@ Transcript:
 {transcript}"""
 
 
+def _get_agent_for_model(model: str) -> Agent[None, TranscriptAnalysis]:
+    """Create a fresh agent for the given model string."""
+    config_error = _get_missing_llm_key_error(model)
+    if config_error:
+        raise RuntimeError(config_error)
+    return Agent[None, TranscriptAnalysis](
+        model=model,
+        result_type=TranscriptAnalysis,
+        system_prompt=transcript_analysis_system_prompt,
+    )
+
+
 async def get_most_relevant_parts_by_transcript(
-    transcript: str, include_broll: bool = False
+    transcript: str, llm_model: Optional[str] = None
 ) -> TranscriptAnalysis:
-    """Get the most relevant parts of a transcript with virality scoring and optional B-roll detection."""
+    """Get the most relevant parts of a transcript with virality scoring."""
+    model = llm_model or config.llm
     logger.info(
-        f"Starting AI analysis of transcript ({len(transcript)} chars), include_broll={include_broll}"
+        f"Starting AI analysis of transcript ({len(transcript)} chars), model={model}"
     )
 
     try:
-        agent = get_transcript_agent()
+        agent = _get_agent_for_model(model) if llm_model else get_transcript_agent()
 
-        result = await agent.run(
-            build_transcript_analysis_prompt(
-                transcript=transcript, include_broll=include_broll
-            )
-        )
+        result = await agent.run(build_transcript_analysis_prompt(transcript=transcript))
 
         analysis = result.data
         logger.info(
@@ -382,7 +362,6 @@ async def get_most_relevant_parts_by_transcript(
             most_relevant_segments=validated_segments,
             summary=analysis.summary,
             key_topics=analysis.key_topics,
-            broll_opportunities=analysis.broll_opportunities if include_broll else None,
         )
 
         logger.info(f"Selected {len(validated_segments)} segments for processing")

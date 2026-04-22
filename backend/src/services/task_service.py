@@ -75,7 +75,6 @@ class TaskService:
         font_size: int = 24,
         font_color: str = "#FFFFFF",
         caption_template: str = "default",
-        include_broll: bool = False,
         processing_mode: str = "fast",
     ) -> str:
         """
@@ -111,7 +110,6 @@ class TaskService:
             font_size=font_size,
             font_color=font_color,
             caption_template=caption_template,
-            include_broll=include_broll,
             processing_mode=processing_mode,
         )
 
@@ -130,6 +128,7 @@ class TaskService:
         processing_mode: str = "fast",
         output_format: str = "vertical",
         add_subtitles: bool = True,
+        llm_model: Optional[str] = None,
         progress_callback: Optional[Callable] = None,
         should_cancel: Optional[Callable] = None,
         clip_ready_callback: Optional[Callable] = None,
@@ -196,6 +195,7 @@ class TaskService:
                 processing_mode=processing_mode,
                 output_format=output_format,
                 add_subtitles=add_subtitles,
+                llm_model=llm_model,
                 cached_transcript=cached_transcript,
                 cached_analysis_json=cached_analysis_json,
                 progress_callback=update_progress,
@@ -412,7 +412,6 @@ class TaskService:
         font_size: int,
         font_color: str,
         caption_template: str,
-        include_broll: bool,
         apply_to_existing: bool,
     ) -> Dict[str, Any]:
         """Update task-level settings and optionally regenerate all clips."""
@@ -423,7 +422,6 @@ class TaskService:
             font_size,
             font_color,
             caption_template,
-            include_broll,
         )
 
         if apply_to_existing:

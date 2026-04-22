@@ -12,25 +12,83 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { signOut, useSession } from "@/lib/auth-client";
 import Link from "next/link";
-import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft } from "lucide-react";
+import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft, Brain } from "lucide-react";
 
 interface UserPreferences {
   fontFamily: string;
   fontSize: number;
   fontColor: string;
+  llmModel: string;
 }
+
+const LLM_PROVIDERS = [
+  {
+    id: "anthropic",
+    name: "Anthropic (Claude)",
+    models: [
+      { id: "anthropic:claude-haiku-4-5-20251001", name: "Claude Haiku 4.5 — Rapide & économique" },
+      { id: "anthropic:claude-sonnet-4-6", name: "Claude Sonnet 4.6 — Équilibré" },
+      { id: "anthropic:claude-opus-4-7", name: "Claude Opus 4.7 — Le plus puissant" },
+      { id: "anthropic:claude-opus-4-6", name: "Claude Opus 4.6 (legacy)" },
+      { id: "anthropic:claude-sonnet-4-5", name: "Claude Sonnet 4.5 (legacy)" },
+      { id: "anthropic:claude-opus-4-5", name: "Claude Opus 4.5 (legacy)" },
+      { id: "anthropic:claude-opus-4-1", name: "Claude Opus 4.1 (legacy)" },
+    ],
+  },
+  {
+    id: "openai",
+    name: "OpenAI (GPT)",
+    models: [
+      { id: "openai:gpt-4.1-nano", name: "GPT-4.1 Nano — Ultra rapide & économique" },
+      { id: "openai:gpt-4.1-mini", name: "GPT-4.1 Mini — Rapide & économique" },
+      { id: "openai:gpt-4o-mini", name: "GPT-4o Mini — Compact" },
+      { id: "openai:gpt-4o", name: "GPT-4o — Multimodal puissant" },
+      { id: "openai:gpt-4.1", name: "GPT-4.1 — Dernière génération" },
+    ],
+  },
+  {
+    id: "google-gla",
+    name: "Google (Gemini)",
+    models: [
+      { id: "google-gla:gemini-2.5-flash-lite-preview-06-17", name: "Gemini 2.5 Flash Lite — Très économique" },
+      { id: "google-gla:gemini-2.5-flash-preview-05-20", name: "Gemini 2.5 Flash — Rapide" },
+      { id: "google-gla:gemini-2.5-pro-preview-06-05", name: "Gemini 2.5 Pro — Très puissant" },
+      { id: "google-gla:gemini-2.0-flash", name: "Gemini 2.0 Flash — Rapide" },
+      { id: "google-gla:gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite — Léger" },
+      { id: "google-gla:gemini-3-flash-preview", name: "Gemini 3 Flash — Nouvelle génération" },
+      { id: "google-gla:gemini-3.1-flash-lite-preview", name: "Gemini 3.1 Flash Lite — Nouvelle génération légère" },
+      { id: "google-gla:gemini-3.1-pro-preview", name: "Gemini 3.1 Pro — Nouvelle génération puissante" },
+      { id: "google-gla:gemma-3-1b-it", name: "Gemma 3 1B — Open source ultra léger" },
+      { id: "google-gla:gemma-3-4b-it", name: "Gemma 3 4B — Open source léger" },
+      { id: "google-gla:gemma-3-12b-it", name: "Gemma 3 12B — Open source intermédiaire" },
+      { id: "google-gla:gemma-3-27b-it", name: "Gemma 3 27B — Open source avancé" },
+      { id: "google-gla:gemma-4-26b-it", name: "Gemma 4 26B — Open source nouvelle génération" },
+      { id: "google-gla:gemma-4-31b-it", name: "Gemma 4 31B — Open source puissant" },
+    ],
+  },
+  {
+    id: "ollama",
+    name: "Ollama (Local)",
+    models: [
+      { id: "ollama:llama3.2", name: "Llama 3.2 — Local" },
+      { id: "ollama:llama3.1", name: "Llama 3.1 — Local" },
+      { id: "ollama:mistral", name: "Mistral — Local" },
+      { id: "ollama:qwen2.5", name: "Qwen 2.5 — Local" },
+    ],
+  },
+];
 
 export default function SettingsPage() {
   const [fontFamily, setFontFamily] = useState("TikTokSans-Regular");
   const [fontSize, setFontSize] = useState(24);
   const [fontColor, setFontColor] = useState("#FFFFFF");
+  const [llmModel, setLlmModel] = useState("anthropic:claude-haiku-4-5-20251001");
   const [availableFonts, setAvailableFonts] = useState<Array<{ name: string, display_name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const { data: session, isPending } = useSession();
-  const isAdmin = Boolean((session?.user as { is_admin?: boolean } | undefined)?.is_admin);
 
   // Load available fonts from backend and inject them into the page
   useEffect(() => {
@@ -87,6 +145,7 @@ export default function SettingsPage() {
           setFontFamily(data.fontFamily);
           setFontSize(data.fontSize);
           setFontColor(data.fontColor);
+          if (data.llmModel) setLlmModel(data.llmModel);
         }
       } catch (error) {
         console.error('Failed to load preferences:', error);
@@ -113,6 +172,7 @@ export default function SettingsPage() {
           fontFamily,
           fontSize,
           fontColor,
+          llmModel,
         }),
       });
 
@@ -182,13 +242,6 @@ export default function SettingsPage() {
             </Link>
 
             <div className="flex items-center gap-3">
-              {isAdmin && (
-                <Link href="/admin">
-                  <Button variant="outline" size="sm">
-                    Admin
-                  </Button>
-                </Link>
-              )}
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Se déconnecter
               </Button>
@@ -337,6 +390,73 @@ export default function SettingsPage() {
                     Vos sous-titres ressembleront à ceci
                   </p>
                 </div>
+              </div>
+            </div>
+
+            <Separator className="my-8" />
+
+            {/* AI Model Section */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-black mb-1">
+                  Modèle IA par défaut
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Modèle utilisé pour l&apos;analyse et la sélection des clips
+                </p>
+              </div>
+
+              {/* Provider selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-black flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  Fournisseur
+                </Label>
+                <Select
+                  value={llmModel.split(":")[0]}
+                  onValueChange={(providerId: string) => {
+                    const provider = LLM_PROVIDERS.find((p) => p.id === providerId);
+                    if (provider) setLlmModel(provider.models[0].id);
+                  }}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choisir un fournisseur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LLM_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Model selector */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-black">
+                  Modèle
+                </Label>
+                <Select
+                  value={llmModel}
+                  onValueChange={setLlmModel}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choisir un modèle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(LLM_PROVIDERS.find((p) => p.id === llmModel.split(":")[0])?.models ?? []).map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Modèle actuel : <span className="font-mono">{llmModel}</span>
+                </p>
               </div>
             </div>
 

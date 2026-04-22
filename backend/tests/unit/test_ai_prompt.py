@@ -28,14 +28,10 @@ def test_build_transcript_analysis_prompt_requires_transcript_fidelity():
     assert "[00:12 - 00:21] A strong opening line" in prompt
 
 
-def test_build_transcript_analysis_prompt_mentions_broll_only_when_enabled():
-    without_broll = build_transcript_analysis_prompt(
+def test_build_transcript_analysis_prompt_focuses_on_clip_selection():
+    prompt = build_transcript_analysis_prompt(
         transcript="[00:12 - 00:21] A strong opening line"
     )
-    with_broll = build_transcript_analysis_prompt(
-        transcript="[00:12 - 00:21] A strong opening line",
-        include_broll=True,
-    )
 
-    assert "B-roll opportunities" not in without_broll
-    assert "B-roll opportunities" in with_broll
+    assert "Select only contiguous ranges" in prompt
+    assert "stock footage" not in prompt

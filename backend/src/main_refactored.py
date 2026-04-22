@@ -24,7 +24,6 @@ from .config import Config, get_config, set_config_override
 from .database import close_db, configure_database, get_db, init_db
 from .workers.job_queue import JobQueue
 from .api.routes import tasks
-from .api.routes.admin import router as admin_router
 from .observability import (
     TRACE_HEADER,
     clear_trace_id,
@@ -87,8 +86,6 @@ def create_app(
             "Content-Type",
             "Authorization",
             "x-supoclip-user-id",
-            "x-supoclip-ts",
-            "x-supoclip-signature",
             "x-trace-id",
             "user_id",
         ],
@@ -162,7 +159,6 @@ def create_app(
     app.mount("/clips", StaticFiles(directory=str(clips_dir)), name="clips")
 
     app.include_router(tasks.router)
-    app.include_router(admin_router)
 
     from .api.routes.media import router as media_router
 

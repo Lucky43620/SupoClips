@@ -34,7 +34,8 @@ model User {
   default_font_family String?   @default("TikTokSans-Regular") @db.VarChar(100)
   default_font_size   Int?      @default(24)
   default_font_color  String?   @default("#FFFFFF") @db.VarChar(7)
-  is_admin             Boolean   @default(false)
+  // Default AI model preference (format: provider:model)
+  default_llm_model   String?   @default("anthropic:claude-haiku-4-5-20251001") @db.VarChar(150)
 
   // Relationships
   tasks         Task[]

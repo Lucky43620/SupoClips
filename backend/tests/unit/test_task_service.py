@@ -1,10 +1,8 @@
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.config import Config
-from src.services import task_service as task_service_module
 from src.services.task_service import TaskService
 
 
@@ -57,8 +55,6 @@ def build_clip_result() -> dict:
 def build_task_service() -> TaskService:
     config = Config()
     config.app_base_url = "http://localhost:3000"
-    config.resend_api_key = "re_test"
-    config.resend_from_email = "SupoClip <noreply@example.com>"
     service = TaskService(db=AsyncMock(), config=config)
     service.cache_repo.get_cache = AsyncMock(return_value=None)
     service.cache_repo.upsert_cache = AsyncMock()
@@ -86,107 +82,8 @@ def build_task_service() -> TaskService:
 
 
 @pytest.mark.asyncio
-async def test_process_task_sends_completion_email_when_enabled(monkeypatch):
-    service = build_task_service()
-    service.task_repo.get_task_notification_context = AsyncMock(
-        return_value={
-            "notify_on_completion": True,
-            "completion_notification_sent_at": None,
-            "source_title": "Demo video",
-            "user_email": "user@example.com",
-            "user_name": "Demo User",
-            "user_first_name": "Demo",
-        }
-    )
-    service.task_repo.mark_completion_notification_sent = AsyncMock(return_value=True)
-    send_task_completed_email = AsyncMock(return_value={"id": "email-1"})
-
-    class FakeTaskCompletionEmailService:
-        def __init__(self, config):
-            self.config = config
-
-        @property
-        def is_configured(self) -> bool:
-            return True
-
-        async def send_task_completed_email(self, **kwargs):
-            return await send_task_completed_email(**kwargs)
-
-    monkeypatch.setattr(
-        task_service_module,
-        "TaskCompletionEmailService",
-        FakeTaskCompletionEmailService,
-    )
-
-    result = await service.process_task(
-        task_id="task-1",
-        url="https://www.youtube.com/watch?v=demo",
-        source_type="youtube",
-    )
-
-    assert result["clips_count"] == 1
-    send_task_completed_email.assert_awaited_once()
-    service.task_repo.mark_completion_notification_sent.assert_awaited_once_with(
-        service.db, "task-1"
-    )
-
-
-@pytest.mark.asyncio
-async def test_process_task_skips_completion_email_when_disabled(monkeypatch):
-    service = build_task_service()
-    service.task_repo.get_task_notification_context = AsyncMock(
-        return_value={
-            "notify_on_completion": False,
-            "completion_notification_sent_at": None,
-            "source_title": "Demo video",
-            "user_email": "user@example.com",
-            "user_name": "Demo User",
-            "user_first_name": "Demo",
-        }
-    )
-    service.task_repo.mark_completion_notification_sent = AsyncMock(return_value=True)
-    send_task_completed_email = AsyncMock()
-
-    class FakeTaskCompletionEmailService:
-        def __init__(self, config):
-            self.config = config
-
-        @property
-        def is_configured(self) -> bool:
-            return True
-
-        async def send_task_completed_email(self, **kwargs):
-            return await send_task_completed_email(**kwargs)
-
-    monkeypatch.setattr(
-        task_service_module,
-        "TaskCompletionEmailService",
-        FakeTaskCompletionEmailService,
-    )
-
-    await service.process_task(
-        task_id="task-1",
-        url="https://www.youtube.com/watch?v=demo",
-        source_type="youtube",
-    )
-
-    send_task_completed_email.assert_not_awaited()
-    service.task_repo.mark_completion_notification_sent.assert_not_awaited()
-
-
-@pytest.mark.asyncio
 async def test_process_task_keeps_generated_clips_standalone():
     service = build_task_service()
-    service.task_repo.get_task_notification_context = AsyncMock(
-        return_value={
-            "notify_on_completion": False,
-            "completion_notification_sent_at": None,
-            "source_title": "Demo video",
-            "user_email": "user@example.com",
-            "user_name": "Demo User",
-            "user_first_name": "Demo",
-        }
-    )
     service.video_service.create_single_clip = AsyncMock(
         side_effect=[
             {
@@ -234,94 +131,3 @@ async def test_process_task_keeps_generated_clips_standalone():
         for call in service.clip_repo.create_clip.await_args_list
     ]
     assert saved_paths == ["/tmp/clip-1.mp4", "/tmp/clip-2.mp4"]
-
-
-@pytest.mark.asyncio
-async def test_process_task_ignores_completion_email_failures(monkeypatch):
-    service = build_task_service()
-    service.task_repo.get_task_notification_context = AsyncMock(
-        return_value={
-            "notify_on_completion": True,
-            "completion_notification_sent_at": None,
-            "source_title": "Demo video",
-            "user_email": "user@example.com",
-            "user_name": "Demo User",
-            "user_first_name": "Demo",
-        }
-    )
-    service.task_repo.mark_completion_notification_sent = AsyncMock(return_value=True)
-    send_task_completed_email = AsyncMock(side_effect=RuntimeError("email failed"))
-
-    class FakeTaskCompletionEmailService:
-        def __init__(self, config):
-            self.config = config
-
-        @property
-        def is_configured(self) -> bool:
-            return True
-
-        async def send_task_completed_email(self, **kwargs):
-            return await send_task_completed_email(**kwargs)
-
-    monkeypatch.setattr(
-        task_service_module,
-        "TaskCompletionEmailService",
-        FakeTaskCompletionEmailService,
-    )
-
-    result = await service.process_task(
-        task_id="task-1",
-        url="https://www.youtube.com/watch?v=demo",
-        source_type="youtube",
-    )
-
-    assert result["clips_count"] == 1
-    send_task_completed_email.assert_awaited_once()
-    service.task_repo.mark_completion_notification_sent.assert_not_awaited()
-    assert any(
-        call.kwargs.get("completed_at") is not None
-        for call in service.task_repo.update_task_runtime_metadata.await_args_list
-    )
-
-
-@pytest.mark.asyncio
-async def test_process_task_skips_completion_email_when_already_sent(monkeypatch):
-    service = build_task_service()
-    service.task_repo.get_task_notification_context = AsyncMock(
-        return_value={
-            "notify_on_completion": True,
-            "completion_notification_sent_at": datetime.now(timezone.utc),
-            "source_title": "Demo video",
-            "user_email": "user@example.com",
-            "user_name": "Demo User",
-            "user_first_name": "Demo",
-        }
-    )
-    service.task_repo.mark_completion_notification_sent = AsyncMock(return_value=True)
-    send_task_completed_email = AsyncMock()
-
-    class FakeTaskCompletionEmailService:
-        def __init__(self, config):
-            self.config = config
-
-        @property
-        def is_configured(self) -> bool:
-            return True
-
-        async def send_task_completed_email(self, **kwargs):
-            return await send_task_completed_email(**kwargs)
-
-    monkeypatch.setattr(
-        task_service_module,
-        "TaskCompletionEmailService",
-        FakeTaskCompletionEmailService,
-    )
-
-    await service.process_task(
-        task_id="task-1",
-        url="https://www.youtube.com/watch?v=demo",
-        source_type="youtube",
-    )
-
-    send_task_completed_email.assert_not_awaited()
-    service.task_repo.mark_completion_notification_sent.assert_not_awaited()

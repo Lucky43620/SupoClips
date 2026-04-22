@@ -7,7 +7,6 @@ const backendDatabaseUrl =
   (databaseUrl.startsWith("postgresql+asyncpg://")
     ? databaseUrl
     : databaseUrl.replace("postgresql://", "postgresql+asyncpg://"));
-const backendAuthSecret = process.env.BACKEND_AUTH_SECRET ?? "supoclip_test_secret";
 const frontendPort = process.env.PLAYWRIGHT_FRONTEND_PORT ?? "3100";
 const backendPort = process.env.PLAYWRIGHT_BACKEND_PORT ?? "8100";
 const frontendBaseUrl = `http://127.0.0.1:${frontendPort}`;
@@ -35,8 +34,6 @@ export default defineConfig({
         DATABASE_URL: backendDatabaseUrl,
         REDIS_HOST: process.env.REDIS_HOST ?? "127.0.0.1",
         REDIS_PORT: process.env.REDIS_PORT ?? "6379",
-        SELF_HOST: "true",
-        BACKEND_AUTH_SECRET: backendAuthSecret,
         TEMP_DIR: process.env.TEMP_DIR ?? "temp",
       },
     },
@@ -51,8 +48,6 @@ export default defineConfig({
         BETTER_AUTH_URL: frontendBaseUrl,
         NEXT_PUBLIC_API_URL: backendBaseUrl,
         BACKEND_INTERNAL_URL: backendBaseUrl,
-        BACKEND_AUTH_SECRET: backendAuthSecret,
-        NEXT_PUBLIC_SELF_HOST: "true",
         BETTER_AUTH_SECRET:
           process.env.BETTER_AUTH_SECRET ?? "supoclip_better_auth_test_secret",
       },

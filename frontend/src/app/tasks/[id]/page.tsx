@@ -95,7 +95,6 @@ interface TaskDetails {
   font_size?: number;
   font_color?: string;
   caption_template?: string;
-  include_broll?: boolean;
 }
 
 interface FontOption {
@@ -152,7 +151,6 @@ export default function TaskPage() {
   const [projectFontSize, setProjectFontSize] = useState("24");
   const [projectFontColor, setProjectFontColor] = useState("#FFFFFF");
   const [projectCaptionTemplate, setProjectCaptionTemplate] = useState("default");
-  const [projectIncludeBroll, setProjectIncludeBroll] = useState(false);
   const [isApplyingSettings, setIsApplyingSettings] = useState(false);
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [availableFonts, setAvailableFonts] = useState<FontOption[]>([]);
@@ -205,7 +203,6 @@ export default function TaskPage() {
         setProjectFontSize(String(taskData.font_size || 24));
         setProjectFontColor(taskData.font_color || "#FFFFFF");
         setProjectCaptionTemplate(taskData.caption_template || "default");
-        setProjectIncludeBroll(Boolean(taskData.include_broll));
 
         // Fetch clips if task is completed or processing (incremental clips)
         if (taskData.status === "completed" || taskData.status === "processing") {
@@ -592,7 +589,6 @@ export default function TaskPage() {
           font_size: safeFontSize,
           font_color: normalizedColor,
           caption_template: projectCaptionTemplate,
-          include_broll: projectIncludeBroll,
           apply_to_existing: true,
         }),
       });
@@ -998,7 +994,7 @@ export default function TaskPage() {
                     Réglages du projet
                   </SheetTitle>
                   <SheetDescription>
-                    Configurez la police, les sous-titres et le B-roll pour les clips de cette tâche.
+                    Configurez la police et les sous-titres pour les clips de cette tâche.
                   </SheetDescription>
                 </SheetHeader>
 
@@ -1076,15 +1072,6 @@ export default function TaskPage() {
                     </Select>
                   </div>
 
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={projectIncludeBroll}
-                      onChange={(e) => setProjectIncludeBroll(e.target.checked)}
-                      className="rounded"
-                    />
-                    Inclure le B-roll
-                  </label>
                 </div>
 
                 <SheetFooter>

@@ -50,11 +50,6 @@ class User(Base):
     last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    # Local admin flag
-    is_admin: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=sql_text("'false'")
-    )
-
     # Relationships
     tasks: Mapped[List["Task"]] = relationship(
         "Task", back_populates="user", cascade="all, delete-orphan"
@@ -91,12 +86,9 @@ class Task(Base):
         String(7), nullable=True, server_default=sql_text("'#FFFFFF'")
     )  # Hex color code
 
-    # Caption template and B-roll options
+    # Caption template options
     caption_template: Mapped[Optional[str]] = mapped_column(
         String(50), nullable=True, server_default=sql_text("'default'")
-    )
-    include_broll: Mapped[Optional[bool]] = mapped_column(
-        Boolean, nullable=True, server_default=sql_text("'false'")
     )
     processing_mode: Mapped[str] = mapped_column(
         String(20), nullable=False, server_default=sql_text("'fast'")

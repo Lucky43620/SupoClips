@@ -16,7 +16,7 @@ import { signOut, useSession } from "@/lib/auth-client";
 import { formatSupportMessage, parseApiError } from "@/lib/api-error";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Youtube, CheckCircle, AlertCircle, Loader2, Palette, Type, Paintbrush, Film, Sparkles, Upload, Monitor, Menu, X, LogOut, List, Shield, Settings } from "lucide-react";
+import { ArrowRight, Youtube, CheckCircle, AlertCircle, Loader2, Palette, Type, Paintbrush, Film, Sparkles, Upload, Monitor, Menu, X, LogOut, List, Settings, HardDrive } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 interface LatestTask {
@@ -83,12 +83,12 @@ export default function Home() {
   const [sourceTitle, setSourceTitle] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { data: session, isPending } = useSession();
-  const isAdmin = Boolean((session?.user as { is_admin?: boolean } | undefined)?.is_admin);
 
   // Font customization states
   const [fontFamily, setFontFamily] = useState("TikTokSans-Regular");
   const [fontSize, setFontSize] = useState(24);
   const [fontColor, setFontColor] = useState("#FFFFFF");
+  const [llmModel, setLlmModel] = useState("anthropic:claude-haiku-4-5-20251001");
   const [availableFonts, setAvailableFonts] = useState<FontOption[]>([]);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(true);
   const [fontSearch, setFontSearch] = useState("");
@@ -96,11 +96,9 @@ export default function Home() {
   const [isUploadingFont, setIsUploadingFont] = useState(false);
   const fontUploadInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Caption template and B-roll states
+  // Caption template states
   const [captionTemplate, setCaptionTemplate] = useState("default");
   const [availableTemplates, setAvailableTemplates] = useState<Array<{ id: string, name: string, description: string, animation: string, font_family?: string, font_size?: number, font_color?: string }>>([]);
-  const [includeBroll, setIncludeBroll] = useState(false);
-  const [brollAvailable, setBrollAvailable] = useState(false);
   const [outputFormat, setOutputFormat] = useState<"vertical" | "original">("vertical");
   const [addSubtitles, setAddSubtitles] = useState(true);
 
@@ -158,7 +156,7 @@ export default function Home() {
     void refreshFonts();
   }, [refreshFonts]);
 
-  // Load caption templates and check B-roll availability
+  // Load caption templates
   useEffect(() => {
     const loadTemplates = async () => {
       try {
@@ -172,20 +170,7 @@ export default function Home() {
       }
     };
 
-    const checkBrollStatus = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/broll/status`);
-        if (response.ok) {
-          const data = await response.json();
-          setBrollAvailable(data.configured || false);
-        }
-      } catch (error) {
-        console.error('Failed to check B-roll status:', error);
-      }
-    };
-
     loadTemplates();
-    checkBrollStatus();
   }, [apiUrl]);
 
   // Load user preferences as defaults
@@ -200,6 +185,7 @@ export default function Home() {
           setFontFamily(data.fontFamily || "TikTokSans-Regular");
           setFontSize(data.fontSize || 24);
           setFontColor(data.fontColor || "#FFFFFF");
+          if (data.llmModel) setLlmModel(data.llmModel);
         }
       } catch (error) {
         console.error('Failed to load user preferences:', error);
@@ -399,10 +385,10 @@ export default function Home() {
             font_color: normalizedColor
           },
           caption_template: captionTemplate,
-          include_broll: includeBroll,
           processing_mode: "fast",
           output_format: outputFormat,
-          add_subtitles: addSubtitles
+          add_subtitles: addSubtitles,
+          llm_model: llmModel
         }),
       });
 
@@ -500,13 +486,11 @@ export default function Home() {
                   Toutes les générations
                 </Button>
               </Link>
-              {isAdmin && (
-                <Link href="/admin">
-                  <Button variant="outline" size="sm">
-                    Admin
-                  </Button>
-                </Link>
-              )}
+              <Link href="/storage">
+                <Button variant="outline" size="sm">
+                  Stockage
+                </Button>
+              </Link>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Se déconnecter
               </Button>
@@ -572,16 +556,14 @@ export default function Home() {
                 <List className="w-4 h-4 text-stone-400" />
                 Toutes les générations
               </Link>
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Shield className="w-4 h-4 text-stone-400" />
-                  Admin
-                </Link>
-              )}
+              <Link
+                href="/storage"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-gray-50 transition-colors"
+              >
+                <HardDrive className="w-4 h-4 text-stone-400" />
+                Stockage
+              </Link>
               <Link
                 href="/settings"
                 onClick={() => setMobileMenuOpen(false)}
@@ -787,24 +769,6 @@ export default function Home() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* B-Roll Toggle */}
-                  {brollAvailable && (
-                    <div className="flex items-center justify-between p-3 border rounded-lg bg-stone-50">
-                      <div className="flex items-center gap-3">
-                        <Film className="w-4 h-4 text-purple-500" />
-                        <div>
-                          <h3 className="text-sm font-medium text-stone-900">B-roll IA</h3>
-                          <p className="text-xs text-stone-500">Ajoute automatiquement des plans Pexels</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={includeBroll}
-                        onCheckedChange={setIncludeBroll}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  )}
 
                   {/* Output format */}
                   <div className="flex items-center justify-between p-3 border rounded-lg bg-stone-50">

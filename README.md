@@ -24,10 +24,10 @@ OpusClip is undeniably powerful. It's an AI video clipping tool that can turn lo
 
 **But here's the catch:**
 
-- **Free plan limitations**: Only 60 minutes of processing per month
+- **Free tier limitations**: Only 60 minutes of processing per month
 - **Watermarks everywhere**: Every free video gets branded with OpusClip's watermark
 - **Expensive pricing**: $15/month for Starter, $29/month for Pro
-- **Processing limits**: Even paid plans have strict minute limits
+- **Processing limits**: Even higher tiers have strict minute limits
 - **Vendor lock-in**: Your content and workflows are tied to their platform
 
 ### The SupoClip Solution
@@ -85,17 +85,8 @@ GOOGLE_API_KEY=your_google_api_key
 # OLLAMA_BASE_URL=http://localhost:11434/v1
 # OLLAMA_API_KEY=your_ollama_api_key  # Optional (Ollama Cloud)
 
-# Optional: Auth secret (change in production)
-BETTER_AUTH_SECRET=change_this_in_production
-
-# Optional: DataFast analytics
-# Track your deployed domain in DataFast
-# NEXT_PUBLIC_DATAFAST_WEBSITE_ID=dfid_xxxxx
-# NEXT_PUBLIC_DATAFAST_DOMAIN=your-domain.com
-# NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST=false
-
-# Optional: Resend for task completion emails
-# RESEND_API_KEY=your_resend_api_key
+# Optional: Auth secret for your local/server install
+BETTER_AUTH_SECRET=change_this_local_secret
 
 # Optional: YouTube metadata provider
 # `yt_dlp` preserves the existing metadata behavior
@@ -107,7 +98,7 @@ BETTER_AUTH_SECRET=change_this_in_production
 ### 2. Start the Services
 
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
 
 This starts:
@@ -129,11 +120,6 @@ Wait until you see health checks passing for all services.
 ### 4. Access the App
 
 Open http://localhost:3000 in your browser, create an account, and start clipping!
-
-If you enable DataFast, also verify that:
-- `/js/script.js` loads from your own app domain
-- `/api/events` requests are proxied through your app domain
-- custom goals appear after successful sign-up, sign-in, task creation, or feedback actions
 
 ### Troubleshooting
 
@@ -172,13 +158,7 @@ If you enable DataFast, also verify that:
 
 **Font picker is empty / cannot select or upload fonts:**
 - Add fonts to `backend/fonts/` – see [backend/fonts/README.md](backend/fonts/README.md) for TikTok Sans and custom fonts
-- Ensure `BACKEND_AUTH_SECRET` is set in `.env`
 - Connected local users can upload custom fonts freely
-
-**Completion emails are not sending:**
-- Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env`
-- `RESEND_FROM_EMAIL` must be a verified sender/domain in your Resend account
-- Completion emails are sent when a task finishes and the user preference is enabled
 
 ## Testing
 

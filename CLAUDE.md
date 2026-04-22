@@ -46,17 +46,15 @@ npm run build        # Prisma generate + Next.js build
 npm run lint
 ```
 
-### Waitlist
+### Tests
 
 ```bash
-cd waitlist
-bun install          # Uses bun, not npm
-bun run dev
+make test-backend
+make test-frontend
+make test-e2e
 ```
 
-### No tests
-
-The project currently has no test files.
+Use Docker for PostgreSQL and Redis before running the integration and browser suites.
 
 ## Architecture
 
@@ -72,7 +70,7 @@ Task creation returns immediately (<100ms). Video processing happens asynchronou
 
 ### Backend: Layered Architecture
 
-The backend was refactored from monolithic (`main.py`, legacy) to layered (`main_refactored.py`, active):
+The backend uses a layered FastAPI architecture with `main_refactored.py` as the active entry point:
 
 ```
 api/routes/          → HTTP handlers (tasks.py, media.py)
@@ -98,7 +96,6 @@ utils/               → Thread pool helpers for blocking operations (async_help
    - Word-synced subtitles from AssemblyAI
    - Custom fonts (TTF files in `backend/fonts/`)
    - Optional transition effects (`backend/transitions/`)
-   - Optional B-roll overlays (Pexels API)
    - Caption templates with animation styles
 5. **Storage** → Clips to `{TEMP_DIR}/clips/`, metadata to PostgreSQL
 
@@ -127,7 +124,6 @@ PostgreSQL 15. Schema in `init.sql`. Mixed naming conventions:
 | File | Purpose |
 |------|---------|
 | `src/main_refactored.py` | Active FastAPI entry point (129 lines) |
-| `src/main.py` | Legacy monolithic entry point (do not use for new work) |
 | `src/api/routes/tasks.py` | Task CRUD, SSE progress, clip editing endpoints (711 lines) |
 | `src/api/routes/media.py` | Fonts, transitions, uploads, templates |
 | `src/services/task_service.py` | Task orchestration, clip editing logic (574 lines) |
@@ -138,7 +134,6 @@ PostgreSQL 15. Schema in `init.sql`. Mixed naming conventions:
 | `src/ai.py` | Pydantic AI agents, system prompt, segment validation |
 | `src/video_utils.py` | Video processing, cropping, subtitles (~820 lines) |
 | `src/clip_editor.py` | Clip trim, split, merge, export presets |
-| `src/broll.py` | Pexels API B-roll integration |
 | `src/caption_templates.py` | Caption template system |
 | `src/config.py` | Environment variable configuration |
 
@@ -161,7 +156,7 @@ PostgreSQL 15. Schema in `init.sql`. Mixed naming conventions:
 - `GET /tasks/{id}/clips/{clip_id}/export?preset=tiktok` — Export with platform preset
 
 **Media:**
-- `GET /fonts`, `GET /transitions`, `GET /caption-templates`, `GET /broll/status`
+- `GET /fonts`, `GET /transitions`, `GET /caption-templates`
 - `POST /upload` — Upload video file
 - `GET /clips/{filename}` — Serve generated clips
 
@@ -177,7 +172,6 @@ OLLAMA_BASE_URL=http://localhost:11434/v1  # Optional for ollama:* models
 OLLAMA_API_KEY=...                   # Optional; required for Ollama Cloud
 
 # Optional
-PEXELS_API_KEY=...                   # B-roll stock footage
 REDIS_HOST=localhost                 # Default: localhost
 REDIS_PORT=6379                      # Default: 6379
 QUEUED_TASK_TIMEOUT_SECONDS=180      # Fail-safe for stuck tasks
