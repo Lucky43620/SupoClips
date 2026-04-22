@@ -127,6 +127,12 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     llm_model = data.get("llm_model") or config.llm
     if not isinstance(llm_model, str) or ":" not in llm_model:
         llm_model = config.llm
+    max_clips = data.get("max_clips", 5)
+    try:
+        max_clips = int(max_clips)
+    except (TypeError, ValueError):
+        max_clips = 5
+    max_clips = max(4, min(10, max_clips))
     if not raw_source or not raw_source.get("url"):
         raise HTTPException(status_code=400, detail="Source URL is required")
 
@@ -166,7 +172,8 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
             processing_mode,
             output_format,
             add_subtitles,
-            llm_model,
+            llm_model=llm_model,
+            max_clips=max_clips,
         )
 
         # Save source metadata for resume/retries in environments without sources.url column

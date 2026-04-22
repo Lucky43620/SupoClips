@@ -221,7 +221,7 @@ def get_transcript_agent() -> Agent[None, TranscriptAnalysis]:
     return _transcript_agent
 
 
-def build_transcript_analysis_prompt(transcript: str) -> str:
+def build_transcript_analysis_prompt(transcript: str, max_clips: int = 5) -> str:
     """Build the grounded task prompt for transcript analysis."""
     return f"""Analyze this video transcript and identify the most engaging segments for short-form content.
 
@@ -234,6 +234,14 @@ Follow this workflow:
 2. Select only contiguous ranges that already exist in the transcript.
 3. Prefer moments with a strong hook, clear payoff, emotional charge, or concrete value.
 4. For each chosen segment, use the earliest timestamp in the selected range as start_time and the latest timestamp in the selected range as end_time.
+
+Number of clips to find: exactly {max_clips} (or fewer only if the transcript does not contain enough quality content).
+
+Duration requirements — CRITICAL:
+- Each clip MUST be at least 20 seconds long (end_time - start_time >= 20 seconds).
+- Prefer clips between 25 and 45 seconds for maximum engagement.
+- NEVER select a clip shorter than 20 seconds. If the best moment is short, extend it to include surrounding context until it reaches 20 seconds.
+- The clip must include the complete thought, sentence, or story — never cut mid-sentence.
 
 Critical accuracy requirements:
 - Do not fabricate or embellish content.
@@ -261,7 +269,7 @@ def _get_agent_for_model(model: str) -> Agent[None, TranscriptAnalysis]:
 
 
 async def get_most_relevant_parts_by_transcript(
-    transcript: str, llm_model: Optional[str] = None
+    transcript: str, llm_model: Optional[str] = None, max_clips: int = 5
 ) -> TranscriptAnalysis:
     """Get the most relevant parts of a transcript with virality scoring."""
     model = llm_model or config.llm
@@ -272,7 +280,7 @@ async def get_most_relevant_parts_by_transcript(
     try:
         agent = _get_agent_for_model(model) if llm_model else get_transcript_agent()
 
-        result = await agent.run(build_transcript_analysis_prompt(transcript=transcript))
+        result = await agent.run(build_transcript_analysis_prompt(transcript=transcript, max_clips=max_clips))
 
         analysis = result.data
         logger.info(
@@ -312,9 +320,9 @@ async def get_most_relevant_parts_by_transcript(
                     )
                     continue
 
-                if duration < 5:  # Minimum 5 seconds
+                if duration < 10:  # Absolute minimum 10 seconds
                     logger.warning(
-                        f"Skipping segment too short: {duration}s (min 5s required)"
+                        f"Skipping segment too short: {duration}s (min 10s required)"
                     )
                     continue
 

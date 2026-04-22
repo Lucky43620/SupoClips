@@ -101,6 +101,7 @@ export default function Home() {
   const [availableTemplates, setAvailableTemplates] = useState<Array<{ id: string, name: string, description: string, animation: string, font_family?: string, font_size?: number, font_color?: string }>>([]);
   const [outputFormat, setOutputFormat] = useState<"vertical" | "original">("vertical");
   const [addSubtitles, setAddSubtitles] = useState(true);
+  const [maxClips, setMaxClips] = useState(5);
 
   // Latest task state
   const [latestTask, setLatestTask] = useState<LatestTask | null>(null);
@@ -388,7 +389,8 @@ export default function Home() {
           processing_mode: "fast",
           output_format: outputFormat,
           add_subtitles: addSubtitles,
-          llm_model: llmModel
+          llm_model: llmModel,
+          max_clips: maxClips
         }),
       });
 
@@ -800,6 +802,30 @@ export default function Home() {
                       onCheckedChange={setAddSubtitles}
                       disabled={isLoading}
                     />
+                  </div>
+
+                  {/* Max clips slider */}
+                  <div className="pt-1 pb-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h3 className="text-sm font-medium text-stone-900">Nombre de clips : {maxClips}</h3>
+                        <p className="text-xs text-stone-500">Clips générés par l&apos;IA (plus = plus long)</p>
+                      </div>
+                      <span className="text-xs font-mono text-stone-400">{maxClips} clips</span>
+                    </div>
+                    <Slider
+                      value={[maxClips]}
+                      onValueChange={(v: number[]) => setMaxClips(v[0])}
+                      min={4}
+                      max={10}
+                      step={1}
+                      disabled={isLoading}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-stone-400 mt-1">
+                      <span>4</span>
+                      <span>10</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

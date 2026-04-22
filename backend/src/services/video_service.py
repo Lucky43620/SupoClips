@@ -29,6 +29,95 @@ config = Config()
 UPLOAD_URL_PREFIX = "upload://"
 
 
+def _ts_to_ms(timestamp: str) -> int:
+    """Convert MM:SS or HH:MM:SS to milliseconds."""
+    parts = timestamp.strip().split(":")
+    try:
+        if len(parts) == 2:
+            return (int(parts[0]) * 60 + int(parts[1])) * 1000
+        if len(parts) == 3:
+            return (int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])) * 1000
+    except (ValueError, IndexError):
+        pass
+    return 0
+
+
+def _ms_to_ts(ms: int) -> str:
+    """Convert milliseconds to MM:SS."""
+    total_s = ms // 1000
+    return f"{total_s // 60:02d}:{total_s % 60:02d}"
+
+
+def extend_segment_to_sentence_boundary(
+    segment: Dict[str, Any],
+    video_path: Path,
+    max_extend_ms: int = 20_000,
+) -> Dict[str, Any]:
+    """Extend segment end_time to the end of the last complete sentence using word data.
+
+    Prevents clips from cutting off mid-sentence. Uses cached AssemblyAI word timings.
+    """
+    cache_path = video_path.with_suffix(".transcript_cache.json")
+    if not cache_path.exists():
+        return segment
+
+    try:
+        with open(cache_path) as f:
+            cache = json.load(f)
+    except Exception:
+        return segment
+
+    words = cache.get("words", [])
+    if not words:
+        return segment
+
+    start_ms = _ts_to_ms(segment.get("start_time", "00:00"))
+    end_ms = _ts_to_ms(segment.get("end_time", "00:00"))
+    hard_limit_ms = end_ms + max_extend_ms
+
+    # Find all words that start after our end_time but are still part of the sentence
+    # (no sentence-ending punctuation between end_time and them)
+    new_end_ms = end_ms
+
+    # First: snap to the actual end of the last word that starts before end_time
+    last_word_end = end_ms
+    for w in words:
+        w_start = w.get("start", 0)
+        w_end = w.get("end", w_start)
+        if w_start <= end_ms:
+            last_word_end = max(last_word_end, w_end)
+    new_end_ms = last_word_end
+
+    # Then: if the next word starts within 1.5s and we're mid-sentence, keep extending
+    for w in words:
+        w_start = w.get("start", 0)
+        w_end = w.get("end", w_start)
+        w_text = w.get("text", "")
+
+        if w_start <= new_end_ms:
+            continue  # already included
+        if w_start > new_end_ms + 3000:
+            break  # gap too large — sentence boundary
+        if w_start > hard_limit_ms:
+            break  # safety cap
+
+        new_end_ms = w_end
+
+        # Stop after a sentence-ending punctuation
+        if w_text.rstrip().endswith((".", "!", "?", "…")):
+            break
+
+    if new_end_ms <= end_ms:
+        return segment
+
+    new_segment = dict(segment)
+    new_segment["end_time"] = _ms_to_ts(new_end_ms)
+    logger.info(
+        f"Extended segment end_time {segment['end_time']} → {new_segment['end_time']}"
+    )
+    return new_segment
+
+
 class VideoService:
     """Service for video processing operations."""
 
@@ -103,13 +192,13 @@ class VideoService:
         return transcript
 
     @staticmethod
-    async def analyze_transcript(transcript: str, llm_model: Optional[str] = None) -> Any:
+    async def analyze_transcript(transcript: str, llm_model: Optional[str] = None, max_clips: int = 5) -> Any:
         """
         Analyze transcript with AI to find relevant segments.
         This is already async, no need to wrap.
         """
         logger.info("Starting AI analysis of transcript")
-        relevant_parts = await get_most_relevant_parts_by_transcript(transcript, llm_model=llm_model)
+        relevant_parts = await get_most_relevant_parts_by_transcript(transcript, llm_model=llm_model, max_clips=max_clips)
         logger.info(
             f"AI analysis complete: {len(relevant_parts.most_relevant_segments)} segments found"
         )
@@ -260,6 +349,7 @@ class VideoService:
         output_format: str = "vertical",
         add_subtitles: bool = True,
         llm_model: Optional[str] = None,
+        max_clips: int = 5,
         cached_transcript: Optional[str] = None,
         cached_analysis_json: Optional[str] = None,
         progress_callback: Optional[Callable[[int, str, str], Awaitable[None]]] = None,
@@ -355,7 +445,7 @@ class VideoService:
                     relevant_parts = None
 
             if relevant_parts is None:
-                relevant_parts = await VideoService.analyze_transcript(transcript, llm_model=llm_model)
+                relevant_parts = await VideoService.analyze_transcript(transcript, llm_model=llm_model, max_clips=max_clips)
 
             # Step 4: Create clips
             if should_cancel and await should_cancel():
@@ -388,8 +478,13 @@ class VideoService:
                         }
                     )
 
-            if processing_mode == "fast":
-                segments_json = segments_json[: config.fast_mode_max_clips]
+            segments_json = segments_json[:max_clips]
+
+            # Extend each segment to the end of the last complete sentence
+            segments_json = [
+                extend_segment_to_sentence_boundary(seg, video_path)
+                for seg in segments_json
+            ]
 
             return {
                 "segments": segments_json,

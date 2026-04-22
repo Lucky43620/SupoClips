@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 import os
 import logging
+import unicodedata
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import json
@@ -26,6 +27,31 @@ from .font_registry import find_font_path
 logger = logging.getLogger(__name__)
 config = Config()
 TRANSCRIPT_CACHE_SCHEMA_VERSION = 2
+
+_SUBTITLE_CHAR_MAP = str.maketrans({
+    "’": "'",  # right single quotation mark (French apostrophe)
+    "‘": "'",  # left single quotation mark
+    "“": '"',  # left double quotation mark
+    "”": '"',  # right double quotation mark
+    "–": "-",  # en dash
+    "—": "-",  # em dash
+    "…": "...",  # horizontal ellipsis
+    "«": '"',  # left-pointing double angle quotation mark
+    "»": '"',  # right-pointing double angle quotation mark
+})
+
+
+def _sanitize_subtitle_text(text: str) -> str:
+    """Normalize text for subtitle rendering.
+
+    Replaces typographic punctuation and decomposes accented characters so that
+    fonts without full Unicode coverage (e.g. TikTokSans) still render cleanly.
+    é → e, ç → c, â → a, etc. are kept as their base Latin letter.
+    """
+    text = text.translate(_SUBTITLE_CHAR_MAP)
+    # Decompose accented characters (NFD), then drop combining diacritics (category Mn)
+    normalized = unicodedata.normalize("NFD", text)
+    return "".join(c for c in normalized if unicodedata.category(c) != "Mn")
 
 
 class VideoProcessor:
@@ -299,7 +325,8 @@ def get_safe_vertical_position(
 ) -> int:
     """Return subtitle y position clamped inside a top/bottom safe area."""
     min_top_padding = max(40, int(video_height * 0.05))
-    min_bottom_padding = max(300, int(video_height * 0.25))
+    # Extra bottom padding so multi-line subtitles don't get clipped by the frame edge.
+    min_bottom_padding = max(400, int(video_height * 0.30))
 
     desired_y = int(video_height * position_y - text_height // 2)
     max_y = video_height - min_bottom_padding - text_height
@@ -828,7 +855,7 @@ def create_static_subtitles(
         if segment_duration < 0.1:
             continue
 
-        text = " ".join(word["text"] for word in word_group)
+        text = _sanitize_subtitle_text(" ".join(word["text"] for word in word_group))
 
         try:
             stroke_color = template.get("stroke_color", "black")
@@ -851,7 +878,7 @@ def create_static_subtitles(
                 .with_start(segment_start)
             )
 
-            text_height = text_clip.size[1] if text_clip.size else 40
+            text_height = text_clip.size[1] if (text_clip.size and text_clip.size[1] > 0) else calculated_font_size * 3
             vertical_position = get_safe_vertical_position(
                 video_height, text_height, position_y
             )
@@ -893,7 +920,7 @@ def create_karaoke_subtitles(
         widths: List[int] = []
         for word in word_group:
             temp_clip = TextClip(
-                text=word["text"],
+                text=_sanitize_subtitle_text(word["text"]),
                 font=processor.font_path,
                 font_size=font_size,
                 color=normal_color,
@@ -954,7 +981,7 @@ def create_karaoke_subtitles(
 
                     word_clip = (
                         TextClip(
-                            text=word["text"],
+                            text=_sanitize_subtitle_text(word["text"]),
                             font=processor.font_path,
                             font_size=int(font_size_for_group * size_multiplier),
                             color=color,
@@ -967,7 +994,7 @@ def create_karaoke_subtitles(
                     )
 
                     text_height = max(
-                        text_height, word_clip.size[1] if word_clip.size else 40
+                        text_height, word_clip.size[1] if (word_clip.size and word_clip.size[1] > 0) else calculated_font_size * 3
                     )
                     vertical_position = get_safe_vertical_position(
                         video_height, text_height, position_y
@@ -1017,7 +1044,7 @@ def create_pop_subtitles(
             continue
 
         # Show the full group text
-        group_text = " ".join(w["text"] for w in word_group)
+        group_text = _sanitize_subtitle_text(" ".join(w["text"] for w in word_group))
         group_start = word_group[0]["start"]
         group_end = word_group[-1]["end"]
         group_duration = group_end - group_start
@@ -1044,7 +1071,7 @@ def create_pop_subtitles(
                 .with_start(group_start)
             )
 
-            text_height = text_clip.size[1] if text_clip.size else 40
+            text_height = text_clip.size[1] if (text_clip.size and text_clip.size[1] > 0) else calculated_font_size * 3
             vertical_position = get_safe_vertical_position(
                 video_height, text_height, position_y
             )
@@ -1086,7 +1113,7 @@ def create_fade_subtitles(
         if not word_group:
             continue
 
-        group_text = " ".join(w["text"] for w in word_group)
+        group_text = _sanitize_subtitle_text(" ".join(w["text"] for w in word_group))
         group_start = word_group[0]["start"]
         group_end = word_group[-1]["end"]
         group_duration = group_end - group_start
